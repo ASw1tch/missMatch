@@ -11,7 +11,8 @@ import SwiftUI
 struct MissMatchApp: App {
     var body: some Scene {
         WindowGroup {
-            SplashScreenView()
+//            SplashScreenView()
+            MyOwnNumberView(viewModel: ContactListViewModel(), phoneNumber: "")
         }
     }
 }

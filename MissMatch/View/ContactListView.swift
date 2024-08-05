@@ -12,7 +12,7 @@ struct ContactListView: View {
     @State private var selectedContact: Contact? = nil
     @State var showMatchView = false
     
-
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -35,13 +35,11 @@ struct ContactListView: View {
                         .sorted { $0.name < $1.name }) { contact in
                             ContactRowView(viewModel: viewModel, contact: contact)
                         }.scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0)
-                            .scaleEffect(phase.isIdentity ? 1 : 0.75)
-                            .blur(radius: phase.isIdentity ? 0 : 10)
-                            
-                    }
-                   
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0)
+                                .scaleEffect(phase.isIdentity ? 1 : 0.75)
+                                .blur(radius: phase.isIdentity ? 0 : 10)
+                        }
                 }
                 .padding()
             }

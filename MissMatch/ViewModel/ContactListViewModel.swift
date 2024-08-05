@@ -14,6 +14,61 @@ class ContactListViewModel: ObservableObject {
     init() {
         fetchAllContacts()
     }
+    func postUserData(_ user: User) {
+        guard let url = URL(string: "http://51.250.55.29:8084/api/v1/users/add") else {
+            print("Invalid URL.")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("*/*", forHTTPHeaderField: "accept")
+        
+        do {
+            let jsonData = try JSONEncoder().encode(user)
+            request.httpBody = jsonData
+            
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    print("Error sending data:", error)
+                    return
+                }
+                
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                    print("Data sent successfully.")
+                } else {
+                    print(response, error, data)
+                }
+            }
+            
+            task.resume()
+        } catch {
+            print("Error encoding JSON:", error)
+        }
+    }
+    
+    func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
+        let store = CNContactStore()
+        let predicate = CNContact.predicateForContacts(matching: CNPhoneNumber(stringValue: phoneNumber))
+        let keysToFetch = [CNContactPhoneNumbersKey as CNKeyDescriptor]
+        
+        do {
+            let contacts = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
+            var phoneNumbers: [String] = []
+            
+            for contact in contacts {
+                for phoneNumber in contact.phoneNumbers {
+                    let number = phoneNumber.value.stringValue
+                    phoneNumbers.append(number)
+                }
+            }
+            completion(phoneNumbers)
+        } catch {
+            print("Failed to fetch contact, error: \(error)")
+            completion([])
+        }
+    }
     
     func fetchAllContacts() {
         // Request access to the Contacts Store
@@ -68,7 +123,7 @@ class ContactListViewModel: ObservableObject {
             let store = CNContactStore()
             let keysToFetch = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey] as [CNKeyDescriptor]
             let request = CNContactFetchRequest(keysToFetch: keysToFetch)
-            
+
             do {
                 try store.enumerateContacts(with: request) { contact, stop in
                     let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
