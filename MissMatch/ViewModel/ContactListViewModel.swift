@@ -3,7 +3,7 @@ import Contacts
 import CoreTelephony
 
 class ContactListViewModel: ObservableObject {
-    @Published var contacts: [Contact] = []
+    @Published var contacts: [ContactList] = []
     @Published var likedContact = false
     @Published var matched = false
     
@@ -13,39 +13,6 @@ class ContactListViewModel: ObservableObject {
     
     init() {
         fetchAllContacts()
-    }
-    func postUserData(_ user: User) {
-        guard let url = URL(string: "http://51.250.55.29:8084/api/v1/users/add") else {
-            print("Invalid URL.")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("*/*", forHTTPHeaderField: "accept")
-        
-        do {
-            let jsonData = try JSONEncoder().encode(user)
-            request.httpBody = jsonData
-            
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                if let error = error {
-                    print("Error sending data:", error)
-                    return
-                }
-                
-                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                    print("Data sent successfully.")
-                } else {
-                    print(response, error, data)
-                }
-            }
-            
-            task.resume()
-        } catch {
-            print("Error encoding JSON:", error)
-        }
     }
     
     func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
@@ -92,12 +59,12 @@ class ContactListViewModel: ObservableObject {
                 let fetchRequest = CNContactFetchRequest(keysToFetch: keys)
                 
                 do {
-                    var fetchedContacts: [Contact] = []
+                    var fetchedContacts: [ContactList] = []
                     try store.enumerateContacts(with: fetchRequest) { contact, _ in
                         // Extract all phone numbers for the contact
                         let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
                         
-                        let contact = Contact(
+                        let contact = ContactList(
                             name: contact.givenName,
                             surname: contact.familyName,
                             phoneNumber: phoneNumbers
@@ -119,7 +86,7 @@ class ContactListViewModel: ObservableObject {
    
     func getAllContacts() {
         DispatchQueue.global(qos: .userInitiated).async {
-            var contactsArray = [Contact]()
+            var contactsArray = [ContactList]()
             let store = CNContactStore()
             let keysToFetch = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey] as [CNKeyDescriptor]
             let request = CNContactFetchRequest(keysToFetch: keysToFetch)
@@ -127,7 +94,7 @@ class ContactListViewModel: ObservableObject {
             do {
                 try store.enumerateContacts(with: request) { contact, stop in
                     let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
-                    let contactItem = Contact(
+                    let contactItem = ContactList(
                         name: contact.givenName,
                         surname: contact.familyName,
                         phoneNumber: phoneNumbers
@@ -200,7 +167,7 @@ class ContactListViewModel: ObservableObject {
     }
     
     
-    func toggleMiss(contact: Contact) {
+    func toggleMiss(contact: ContactList) {
         if let index = contacts.firstIndex(where: { $0.id == contact.id }) {
             if contacts[index].iLiked {
                 contacts[index].iLiked.toggle()

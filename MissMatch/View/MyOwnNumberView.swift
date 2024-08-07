@@ -30,27 +30,34 @@ struct MyOwnNumberView: View {
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                .tint(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
+                .tint(Color.primary)
                 
-                
-                TextField("Phone Number", text: $phoneNumber)
+                TextField("Phone", text: $phoneNumber)
                     .keyboardType(.phonePad)
+                    .bold()
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
             }
             .padding()
+            .foregroundColor(Color.primary)
             
             Button(action: {
-                let fullPhoneNumber = selectedCountry!.code + phoneNumber
-                viewModel.findContactPhoneNumbers(for: fullPhoneNumber) { phoneNumbers in
-                    let user = User(appleId: String(Int.random(in: 100000...999999)), phones: phoneNumbers)
-                    print(user)
-                    viewModel.postUserData(user)
+                var myNumbers = [String]()
+                var myInputNumber = selectedCountry!.code + phoneNumber
+                myNumbers.append(myInputNumber)
+                viewModel.findContactPhoneNumbers(for: myInputNumber) { phoneNumbers in
+                    myNumbers.append(contentsOf: phoneNumbers)
+                    print("All phone numbers for the contact:", myNumbers)
                 }
-                print(selectedCountry!.code + phoneNumber)
+                print(myNumbers)
+                let rawPhoneNumbers = normalizePhoneNumbers(myNumbers)
+                let user = User(appleId: String(Int.random(in: 100000...999999)), phones: rawPhoneNumbers)
+                NetworkManager.shared.postData(for: .user(user))
             }) {
                 Text("Continue")
                     .foregroundColor(.white)
@@ -63,6 +70,21 @@ struct MyOwnNumberView: View {
             .disabled(phoneNumber.isEmpty)
         }
         .padding()
+    }
+    
+    func normalizePhoneNumbers(_ phoneNumbers: [String]) -> [String] {
+        var seenNumbers = Set<String>()
+        
+        let normalizedNumbers = phoneNumbers.compactMap { phoneNumber -> String? in
+            let filtered = phoneNumber.filter { "+0123456789".contains($0) }
+            if seenNumbers.contains(filtered) {
+                return nil
+            } else {
+                seenNumbers.insert(filtered)
+                return filtered
+            }
+        }
+        return normalizedNumbers
     }
 }
 

@@ -8,7 +8,7 @@
 import Foundation
 import CryptoKit
 
-struct User: Codable {
+struct User: Codable, Postable {
     var appleId: String
     var phones: [String]
 }

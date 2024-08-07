@@ -27,7 +27,7 @@ struct ContactRowView: View {
     @State private var showMatchView = false
     @State private var showPaywall = false
     
-    var contact: Contact
+    var contact: ContactList
     
     var heartState: HeartState {
         if contact.itsMatch {
@@ -135,7 +135,7 @@ func hearts() -> some View {
 }
 struct ContactRowView_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleContact = Contact(name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
+        let sampleContact = ContactList(name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
         let viewModel = ContactListViewModel()
         viewModel.contacts = [sampleContact]
         

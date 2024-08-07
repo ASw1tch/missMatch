@@ -12,7 +12,8 @@ struct MissMatchApp: App {
     var body: some Scene {
         WindowGroup {
 //            SplashScreenView()
-            MyOwnNumberView(viewModel: ContactListViewModel(), phoneNumber: "")
+//            MyOwnNumberView(viewModel: ContactListViewModel(), phoneNumber: "")
+            ContactListView()
         }
     }
 }
