@@ -8,29 +8,30 @@
 import SwiftUI
 
 struct ContactListView: View {
+    
     @StateObject var viewModel = ContactListViewModel()
     @State private var selectedContact: ContactList? = nil
     @State var showMatchView = false
     @State var testId = ""
     
-    
     var body: some View {
         NavigationStack {
-    
+            
             HStack {
-            TextField("ID", text: $testId)
-                .keyboardType(.phonePad)
-                .bold()
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                TextField("ID", text: $testId)
+                    .keyboardType(.phonePad)
+                    .bold()
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
                 Button(action: {
                     let contactArray: [Contact] = viewModel.contacts
-                        .map { Contact(phones: $0.phoneNumber) }
+                        .compactMap { contact in
+                            let validPhones = contact.phoneNumber.filter { !$0.isEmpty }
+                            return validPhones.isEmpty ? nil : Contact(phones: validPhones)
+                        }
                     
                     let contactRequest = SaveContactRequest(userId: Int(testId) ?? 16, contacts: contactArray)
-//                    print(contactRequest)
-                    
                     NetworkManager.shared.postData(for: .contacts(contactRequest))
                 }) {
                     Text("SendData")
@@ -42,10 +43,10 @@ struct ContactListView: View {
                 }
                 .padding()
                 .disabled(testId.isEmpty)
-        }
-        .padding()
-        .foregroundColor(Color.primary)
-        
+            }
+            .padding()
+            .foregroundColor(Color.primary)
+            
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("I miss...")
@@ -78,7 +79,6 @@ struct ContactListView: View {
         }.onAppear {
             viewModel.fetchAllContacts()
             viewModel.getAllContacts()
-            viewModel.fetchMyPhoneNumbers()
         }
     }
 }

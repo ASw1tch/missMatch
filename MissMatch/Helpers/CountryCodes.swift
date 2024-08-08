@@ -13,8 +13,32 @@ struct Country: Hashable {
     let name: String
 }
 
-class CountryCodes {
-        let countryCodes: [Country] = [
+struct CountryCodes {
+    private let preferredCountries = ["Serbia", "Russia", "Ukraine", "Belarus", "Kazakhstan", "Armenia", "Turkey", "Georgia", "Cyprus"]
+    
+    let countryCodes: [Country]
+    
+    func sortedCountryCodes() -> [Country] {
+        return countryCodes.sorted { country1, country2 in
+            let isCountry1Preferred = preferredCountries.contains(country1.name)
+            let isCountry2Preferred = preferredCountries.contains(country2.name)
+            
+            if isCountry1Preferred && !isCountry2Preferred {
+                return true
+            } else if !isCountry1Preferred && isCountry2Preferred {
+                return false
+            } else if isCountry1Preferred && isCountry2Preferred {
+                let index1 = preferredCountries.firstIndex(of: country1.name) ?? Int.max
+                let index2 = preferredCountries.firstIndex(of: country2.name) ?? Int.max
+                return index1 < index2
+            } else {
+                return country1.code < country2.code
+            }
+        }
+    }
+}
+let countryCodesInstance = CountryCodes(
+    countryCodes: [
             Country(flag: "🇦🇫", code: "+93", name: "Afghanistan"),
             Country(flag: "🇦🇱", code: "+355", name: "Albania"),
             Country(flag: "🇩🇿", code: "+213", name: "Algeria"),
@@ -260,12 +284,6 @@ class CountryCodes {
             Country(flag: "🇿🇲", code: "+260", name: "Zambia"),
             Country(flag: "🇿🇼", code: "+263", name: "Zimbabwe"),
         ]
-        
-    func sortedCountryCodes() -> [Country] {
-        let preferredCountries = ["Russia", "Ukraine", "Belarus", "Kazakhstan", "Armenia", "Turkey", "Georgia", "Serbia", "Cyprus"]
-        let preferred = countryCodes.filter { preferredCountries.contains($0.name) }
-        let others = countryCodes.filter { !preferredCountries.contains($0.name) }
-        return preferred + others
-    }
-}
+)
+
 

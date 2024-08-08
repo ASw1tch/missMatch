@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SplashScreenView: View {
+    
     @State private var isActive = false
     
     var body: some View {
@@ -24,7 +25,7 @@ struct SplashScreenView: View {
                                 .resizable()
                                 .frame(width: 150, height: 150)
                             Spacer()
-                        
+                            
                             Text("Safely find out who's")
                                 .foregroundStyle(.white)
                                 .font(.title3)

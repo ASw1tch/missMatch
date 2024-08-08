@@ -11,9 +11,10 @@ import SwiftUI
 struct MyOwnNumberView: View {
     
     @ObservedObject var viewModel: ContactListViewModel
-    @State private var selectedCountry: Country?
+    @State var selectedCountry: Country
     @State var phoneNumber: String
-    private let countryCodes = CountryCodes().sortedCountryCodes()
+    
+    let countryCodes = countryCodesInstance.sortedCountryCodes()
     
     var body: some View {
         VStack {
@@ -24,7 +25,8 @@ struct MyOwnNumberView: View {
                 .padding()
             HStack {
                 Picker("Select Country", selection: $selectedCountry) {
-                    ForEach(countryCodes, id: \.code) { country in
+                    
+                    ForEach(countryCodes, id: \.self) { country in
                         Text("\(country.flag) \(country.code)")
                             .tag(country as Country?)
                     }
@@ -47,17 +49,10 @@ struct MyOwnNumberView: View {
             .foregroundColor(Color.primary)
             
             Button(action: {
-                var myNumbers = [String]()
-                var myInputNumber = selectedCountry!.code + phoneNumber
-                myNumbers.append(myInputNumber)
-                viewModel.findContactPhoneNumbers(for: myInputNumber) { phoneNumbers in
-                    myNumbers.append(contentsOf: phoneNumbers)
-                    print("All phone numbers for the contact:", myNumbers)
-                }
-                print(myNumbers)
-                let rawPhoneNumbers = normalizePhoneNumbers(myNumbers)
-                let user = User(appleId: String(Int.random(in: 100000...999999)), phones: rawPhoneNumbers)
-                NetworkManager.shared.postData(for: .user(user))
+                viewModel.handleContinueAction(
+                    selectedCountryCode: selectedCountry.code,
+                    phoneNumber: phoneNumber
+                )
             }) {
                 Text("Continue")
                     .foregroundColor(.white)
@@ -71,26 +66,11 @@ struct MyOwnNumberView: View {
         }
         .padding()
     }
-    
-    func normalizePhoneNumbers(_ phoneNumbers: [String]) -> [String] {
-        var seenNumbers = Set<String>()
-        
-        let normalizedNumbers = phoneNumbers.compactMap { phoneNumber -> String? in
-            let filtered = phoneNumber.filter { "+0123456789".contains($0) }
-            if seenNumbers.contains(filtered) {
-                return nil
-            } else {
-                seenNumbers.insert(filtered)
-                return filtered
-            }
-        }
-        return normalizedNumbers
-    }
 }
 
 
 #Preview {
-    MyOwnNumberView(viewModel: ContactListViewModel(), phoneNumber: "89923123312")
+    MyOwnNumberView(viewModel: ContactListViewModel(), selectedCountry: Country(flag: "🇹🇻", code: "+688", name: "Tuvalu"), phoneNumber: "89923123312")
 }
 
 

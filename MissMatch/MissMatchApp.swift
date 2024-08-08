@@ -12,8 +12,8 @@ struct MissMatchApp: App {
     var body: some Scene {
         WindowGroup {
 //            SplashScreenView()
-//            MyOwnNumberView(viewModel: ContactListViewModel(), phoneNumber: "")
-            ContactListView()
+            MyOwnNumberView(viewModel: ContactListViewModel(), selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"), phoneNumber: "")
+//            ContactListView()
         }
     }
 }

@@ -72,7 +72,7 @@ final class NetworkManager {
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
                     print("Data sent successfully.")
                 } else {
-                    print(response, error, data ?? "No data")
+                    print(response ?? "No data")
                 }
             }
             
@@ -98,100 +98,3 @@ final class NetworkManager {
         return normalizedNumbers
     }
 }
-
-//enum PostDataCase {
-//    case user
-//    case contacts
-//    case likes
-//    
-//    var urlString: String {
-//        switch self {
-//        case .user:
-//            return "http://51.250.55.29:8084/api/v1/users/add"
-//        case .contacts:
-//            return "http://51.250.55.29:8084/api/v1/contacts/save"
-//        case .likes:
-//            return "http://51.250.55.29:8084/api/v1/like/addAll"
-//        }
-//    }
-//}
-//
-//final class NetworkManager {
-//    static let shared = NetworkManager()
-//    
-//    private init() {}
-//    
-//    func postData<T: Encodable>(_ data: T, for caseType: PostDataCase) {
-//        guard let url = URL(string: caseType.urlString) else {
-//            print("Invalid URL.")
-//            return
-//        }
-//        
-//        var request = URLRequest(url: url)
-//        request.httpMethod = "POST"
-//        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//        request.setValue("*/*", forHTTPHeaderField: "accept")
-//        do {
-//            let jsonData = try JSONEncoder().encode(data)
-//            print(data)
-//            request.httpBody = jsonData
-//            
-//            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-//                if let error = error {
-//                    print("Error sending data:", error)
-//                    return
-//                }
-//                
-//                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-//                    
-//                    print("Data sent successfully.")
-//                } else {
-//                    print(response, error, data ?? "No data")
-//                }
-//            }
-//            
-//            task.resume()
-//        } catch {
-//            print("Error encoding JSON:", error)
-//        }
-//    }
-//    
-//    func postSaveContactRequest(_ user: SaveContactRequest) {
-//        guard let url = URL(string: "http://51.250.55.29:8084/api/v1/contacts/save") else {
-//            print("Invalid URL.")
-//            return
-//        }
-//        print(user)
-//        var request = URLRequest(url: url)
-//        request.httpMethod = "POST"
-//        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//        request.setValue("*/*", forHTTPHeaderField: "accept")
-//        
-//        do {
-//            let jsonData = try JSONEncoder().encode(user)
-//            request.httpBody = jsonData
-//            if let jsonString = String(data: jsonData, encoding: .utf8) {
-//                print("JSON Output:")
-//                print(jsonString)
-//            }
-//            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-//                if let error = error {
-//                    print("Error sending data:", error)
-//                    return
-//                }
-//                
-//                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-//                    print("Data sent successfully.")
-//                    
-//                } else {
-//                    print(response, error, data)
-//                }
-//               
-//            }
-//            
-//            task.resume()
-//        } catch {
-//            print("Error encoding JSON:", error)
-//        }
-//    }
-//}

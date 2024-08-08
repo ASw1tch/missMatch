@@ -34,8 +34,6 @@ struct ItsAMatchView: View {
                     Text("Awesome!")
                 }.buttonStyle(.borderedProminent)
             }
-            
-            
         }
     }
 }

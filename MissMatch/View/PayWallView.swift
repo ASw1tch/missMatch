@@ -28,8 +28,6 @@ struct PayWallView: View {
                     Text("Later")
                 }.buttonStyle(.borderedProminent)
             }
-            
-            
         }
     }
 }
