@@ -13,7 +13,7 @@ class ContactListViewModel: ObservableObject {
     let maxFreeHearts = 3
     
     init() {
-        fetchAllContacts()
+            self.fetchAllContacts()
     }
     
     func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
@@ -42,7 +42,6 @@ class ContactListViewModel: ObservableObject {
     func fetchAllContacts() {
         DispatchQueue.global(qos: .userInitiated).async {
             let store = CNContactStore()
-            
             store.requestAccess(for: .contacts) { granted, error in
                 guard granted else {
                     return

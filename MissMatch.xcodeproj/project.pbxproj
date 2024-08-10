@@ -18,6 +18,7 @@
 		EA4467342C5590E800735A08 /* Confetti.json in Resources */ = {isa = PBXBuildFile; fileRef = EA4467322C5590E800735A08 /* Confetti.json */; };
 		EA4467392C55917100735A08 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4467382C55917100735A08 /* LottieView.swift */; };
 		EA44673B2C55A1D300735A08 /* ItsAMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA44673A2C55A1D300735A08 /* ItsAMatchView.swift */; };
+		EA4886C32C679190004D1D9C /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4886C22C679190004D1D9C /* SignInView.swift */; };
 		EA749BF42C56CFC900818DEB /* con3.json in Resources */ = {isa = PBXBuildFile; fileRef = EA749BF32C56CFC900818DEB /* con3.json */; };
 		EA913CE62C5E746000CC90F5 /* PhoneNumberHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE52C5E746000CC90F5 /* PhoneNumberHasher.swift */; };
 		EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */; };
@@ -44,6 +45,7 @@
 		EA4467322C5590E800735A08 /* Confetti.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = Confetti.json; sourceTree = "<group>"; };
 		EA4467382C55917100735A08 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
 		EA44673A2C55A1D300735A08 /* ItsAMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItsAMatchView.swift; sourceTree = "<group>"; };
+		EA4886C22C679190004D1D9C /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		EA749BF32C56CFC900818DEB /* con3.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = con3.json; sourceTree = "<group>"; };
 		EA913CE52C5E746000CC90F5 /* PhoneNumberHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneNumberHasher.swift; sourceTree = "<group>"; };
 		EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyOwnNumberView.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				EA19DAA42C595C8B00D12A82 /* SplashScreenView.swift */,
 				EA19DAA82C598FCD00D12A82 /* PayWallView.swift */,
 				EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */,
+				EA4886C22C679190004D1D9C /* SignInView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -257,6 +260,7 @@
 				EA44673B2C55A1D300735A08 /* ItsAMatchView.swift in Sources */,
 				EA19DAA52C595C8C00D12A82 /* SplashScreenView.swift in Sources */,
 				EA19DAA92C598FCD00D12A82 /* PayWallView.swift in Sources */,
+				EA4886C32C679190004D1D9C /* SignInView.swift in Sources */,
 				EA44672D2C557B4400735A08 /* ColorHelper.swift in Sources */,
 				EAF74E822C52F05D003A8B06 /* MissMatchApp.swift in Sources */,
 				EA19DAB12C5ACE4400D12A82 /* User.swift in Sources */,

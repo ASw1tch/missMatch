@@ -13,6 +13,7 @@ struct MyOwnNumberView: View {
     @ObservedObject var viewModel: ContactListViewModel
     @State var selectedCountry: Country
     @State var phoneNumber: String
+    @State private var isPresentedList = false
     
     let countryCodes = countryCodesInstance.sortedCountryCodes()
     
@@ -53,6 +54,7 @@ struct MyOwnNumberView: View {
                     selectedCountryCode: selectedCountry.code,
                     phoneNumber: phoneNumber
                 )
+                isPresentedList = true
             }) {
                 Text("Continue")
                     .foregroundColor(.white)
@@ -65,6 +67,9 @@ struct MyOwnNumberView: View {
             .disabled(phoneNumber.isEmpty)
         }
         .padding()
+        .fullScreenCover(isPresented: $isPresentedList) {
+            ContactListView(viewModel: viewModel)
+        }
     }
 }
 

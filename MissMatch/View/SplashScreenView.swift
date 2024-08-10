@@ -6,18 +6,24 @@
 //
 
 import SwiftUI
+import Contacts
 
 struct SplashScreenView: View {
     
     @State private var isActive = false
+    @State private var shouldPresentSignIn = false
     
     var body: some View {
         ZStack {
-            Color.init(hex: "#f8dcdc")
+            Color(hex: "#f8dcdc")
                 .ignoresSafeArea()
             VStack {
                 if isActive {
-                    ContactListView()
+                    if shouldPresentSignIn {
+                        SignInView()
+                    } else {
+                        ContactListView()
+                    }
                 } else {
                     ZStack {
                         VStack {
@@ -35,9 +41,9 @@ struct SplashScreenView: View {
                                 .font(.title3)
                                 .italic()
                                 .bold()
-                            
                         }
                         .padding(30)
+                        
                         VStack {
                             LottieView(name: "intro", loopMode: .playOnce)
                                 .frame(width: 500, height: 600)
@@ -46,7 +52,7 @@ struct SplashScreenView: View {
                                         gradient: Gradient(colors: [Color.black, Color.black.opacity(0)]),
                                         center: .center,
                                         startRadius: 150,
-                                        endRadius:300
+                                        endRadius: 300
                                     )
                                 }
                         }
@@ -55,16 +61,34 @@ struct SplashScreenView: View {
                 }
             }
             .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    withAnimation {
-                        self.isActive = true
-                    }
-                }
+                checkContactAuthorization()
+            }
+        }
+    }
+    
+    private func checkContactAuthorization() {
+        let contactStore = CNContactStore()
+        switch CNContactStore.authorizationStatus(for: .contacts) {
+        case .authorized:
+            proceedToNextView()
+        case .notDetermined:
+            self.shouldPresentSignIn = true
+            proceedToNextView()
+            
+        default:
+            self.shouldPresentSignIn = true
+            proceedToNextView()
+        }
+    }
+    
+    private func proceedToNextView() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation {
+                self.isActive = true
             }
         }
     }
 }
-
 #Preview {
     SplashScreenView()
 }
