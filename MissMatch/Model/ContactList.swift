@@ -8,8 +8,8 @@
 import Foundation
 import CryptoKit
 
-struct ContactList: Identifiable, Postable {
-    var id = UUID()
+struct ContactList: Identifiable, Postable, Equatable{
+    var id: Int
     var name: String
     var surname: String
     var phoneNumber: [String]

@@ -14,6 +14,7 @@ class ContactListViewModel: ObservableObject {
     
     init() {
             self.fetchAllContacts()
+            self.loadLikesFromUserDefaults()
     }
     
     func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
@@ -46,7 +47,7 @@ class ContactListViewModel: ObservableObject {
                 guard granted else {
                     return
                 }
-
+                
                 let keys = [CNContactGivenNameKey,
                             CNContactPhoneNumbersKey,
                             CNContactFamilyNameKey,
@@ -56,18 +57,35 @@ class ContactListViewModel: ObservableObject {
                 
                 do {
                     var fetchedContacts: [ContactList] = []
+                    var savedContactIDs = UserDefaults.standard.dictionary(forKey: "savedContactIDs") as? [String: Int] ?? [:]
+                    
                     try store.enumerateContacts(with: fetchRequest) { contact, _ in
                         let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
+                        let uniqueKey = "\(contact.givenName)\(contact.familyName)\(phoneNumbers.joined())"
+                        
+                        let contactID: Int
+                        if let savedID = savedContactIDs[uniqueKey] {
+                            contactID = savedID
+                        } else {
+                            contactID = Int.random(in: 1000...900000)
+                            savedContactIDs[uniqueKey] = contactID
+                            UserDefaults.standard.set(savedContactIDs, forKey: "savedContactIDs")
+                        }
+                        
                         let contact = ContactList(
+                            id: contactID,
                             name: contact.givenName,
                             surname: contact.familyName,
                             phoneNumber: phoneNumbers
                         )
                         fetchedContacts.append(contact)
                     }
+                    
                     DispatchQueue.main.async {
                         self.contacts = fetchedContacts
+                        self.loadLikesFromUserDefaults()
                     }
+                    
                 } catch {
                     print("Failed to fetch contacts: \(error)")
                 }
@@ -86,6 +104,7 @@ class ContactListViewModel: ObservableObject {
                 try store.enumerateContacts(with: request) { contact, stop in
                     let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
                     let contactItem = ContactList(
+                        id: Int.random(in: 1000...9000),
                         name: contact.givenName,
                         surname: contact.familyName,
                         phoneNumber: phoneNumbers
@@ -148,18 +167,57 @@ class ContactListViewModel: ObservableObject {
         if let index = contacts.firstIndex(where: { $0.id == contact.id }) {
             if contacts[index].iLiked {
                 contacts[index].iLiked.toggle()
-                heartCount -= 1
                 contacts[index].itsMatch = false
+                removeLike(contact: contacts[index])
             } else if heartCount < maxFreeHearts {
                 contacts[index].iLiked.toggle()
-                heartCount += 1
-                matched = .random()
-                matched ? contacts[index].itsMatch.toggle() : nil
+                saveLike(contact: contacts[index])
             } else {
                 print("Превышен лимит бесплатных сердечек")
             }
-            // Здесь можно добавить логику для сохранения изменений в базу данных
+            saveLikesToUserDefaults()
+            print(heartCount)
         }
+    }
+    
+    private func saveLike(contact: ContactList) {
+        var savedLikes = UserDefaults.standard.array(forKey: "savedLikes") as? [Int] ?? []
+        savedLikes.append(contact.id)
+        print(contact.id)
+        heartCount += 1
+        UserDefaults.standard.set(savedLikes, forKey: "savedLikes")
+    }
+    
+    private func removeLike(contact: ContactList) {
+        var savedLikes = UserDefaults.standard.array(forKey: "savedLikes") as? [Int] ?? []
+        if let index = savedLikes.firstIndex(of: contact.id) {
+            savedLikes.remove(at: index)
+            heartCount -= 1
+            UserDefaults.standard.set(savedLikes, forKey: "savedLikes")
+        }
+    }
+    
+   func loadLikesFromUserDefaults() {
+        let savedLikes = UserDefaults.standard.array(forKey: "savedLikes") as? [Int] ?? []
+       print("loading", savedLikes)
+       heartCount = savedLikes.count
+        for i in 0..<contacts.count {
+            if savedLikes.contains(contacts[i].id) {
+                contacts[i].iLiked = true
+                print(contacts[i].iLiked)
+            }
+        }
+    }
+    
+    private func saveLikesToUserDefaults() {
+        var savedLikes: [Int] = []
+        for contact in contacts {
+            if contact.iLiked {
+                savedLikes.append(contact.id)
+            }
+        }
+        print(savedLikes)
+        UserDefaults.standard.set(savedLikes, forKey: "savedLikes")
     }
 }
 
