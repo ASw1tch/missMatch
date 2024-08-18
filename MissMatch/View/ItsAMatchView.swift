@@ -10,7 +10,7 @@ import SwiftUI
 struct ItsAMatchView: View {
     @Environment(\.presentationMode) var presentationMode
     
-    var contact: Contact
+    var contact: ContactList
     
     var body: some View {
         ZStack(alignment: .center) {
@@ -34,12 +34,10 @@ struct ItsAMatchView: View {
                     Text("Awesome!")
                 }.buttonStyle(.borderedProminent)
             }
-            
-            
         }
     }
 }
 
 #Preview {
-    ItsAMatchView(contact: Contact(name: "Mary", surname: "Smith", phoneNumber: ["+79312444263"]))
+    ItsAMatchView(contact: ContactList(name: "Mary", surname: "Smith", phoneNumber: ["+79312444263"]))
 }

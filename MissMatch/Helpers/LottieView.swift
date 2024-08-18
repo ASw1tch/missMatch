@@ -35,7 +35,6 @@ struct LottieView: UIViewRepresentable {
         animationView.contentMode = .center
         animationView.play()
       
-        
         return view
     }
     

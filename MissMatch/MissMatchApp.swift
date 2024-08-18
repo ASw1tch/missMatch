@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct MissMatchApp: App {
+    
     var body: some Scene {
         WindowGroup {
             SplashScreenView()

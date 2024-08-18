@@ -27,7 +27,7 @@ struct ContactRowView: View {
     @State private var showMatchView = false
     @State private var showPaywall = false
     
-    var contact: Contact
+    var contact: ContactList
     
     var heartState: HeartState {
         if contact.itsMatch {
@@ -38,8 +38,6 @@ struct ContactRowView: View {
             return .standBy
         }
     }
-    
-    
     
     var body: some View {
         ZStack {
@@ -70,19 +68,19 @@ struct ContactRowView: View {
                         }
                     }())
                 }.disabled(contact.itsMatch)
-                .alert(isPresented: $showAlert) {
-                    Alert(
-                        title: Text("Limit Reached"),
-                        message: Text("You have reached the maximum number of free hearts. Please upgrade to premium to add more."),
-                        primaryButton: .default(Text("Extend quota for $1.99 for 5 more")) {
-                            showPaywall = true
-                        },
-                        secondaryButton: .cancel()
-                    )
-                }
-                .fullScreenCover(isPresented: $showPaywall) {
-                    PayWallView() // Ваш экран с оплатой
-                }
+                    .alert(isPresented: $showAlert) {
+                        Alert(
+                            title: Text("Limit Reached"),
+                            message: Text("You have reached the maximum number of free hearts. Please upgrade to premium to add more."),
+                            primaryButton: .default(Text("Extend quota for $1.99 for 5 more")) {
+                                showPaywall = true
+                            },
+                            secondaryButton: .cancel()
+                        )
+                    }
+                    .fullScreenCover(isPresented: $showPaywall) {
+                        PayWallView() // Ваш экран с оплатой
+                    }
             }
         }
         .padding()
@@ -135,7 +133,7 @@ func hearts() -> some View {
 }
 struct ContactRowView_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleContact = Contact(name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
+        let sampleContact = ContactList(name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
         let viewModel = ContactListViewModel()
         viewModel.contacts = [sampleContact]
         

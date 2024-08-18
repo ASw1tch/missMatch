@@ -1,5 +1,5 @@
 //
-//  Contact.swift
+//  ContactList.swift
 //  MissMatch
 //
 //  Created by Anatoliy Petrov on 31.7.24..
@@ -8,7 +8,7 @@
 import Foundation
 import CryptoKit
 
-struct Contact: Identifiable {
+struct ContactList: Identifiable, Postable {
     var id = UUID()
     var name: String
     var surname: String
