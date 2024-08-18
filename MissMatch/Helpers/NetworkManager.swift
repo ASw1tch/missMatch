@@ -17,11 +17,11 @@ enum PostDataCase {
     var urlString: String {
         switch self {
         case .user:
-            return "http://51.250.55.29:8084/api/v1/users/add"
+            return K.API.userApiUrl
         case .contacts:
-            return "http://51.250.55.29:8084/api/v1/contacts/save"
+            return K.API.contactsApiUrl
         case .likes:
-            return "http://51.250.55.29:8084/api/v1/like/addAll"
+            return K.API.likesApiUrl
         }
     }
     
@@ -33,7 +33,9 @@ enum PostDataCase {
             contacts.contacts = contacts.contacts.map { contact in
                 var normalizedContact = contact
                 let normalizedPhones = NetworkManager.shared.normalizePhoneNumbers(contact.phones)
-                //normalizedContact.phones = normalizedPhones.map { PhoneNumberHasher.hashPhoneNumber($0) }
+                #if DEBUG
+                normalizedContact.phones = normalizedPhones.map { PhoneNumberHasher.hashPhoneNumber($0) }
+                #endif
                 return normalizedContact
             }
             return contacts

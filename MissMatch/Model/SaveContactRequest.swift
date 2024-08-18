@@ -20,7 +20,3 @@ struct SaveContactRequest: Codable, Postable {
 struct Contact: Codable, Postable {
     var phones: [String]
 }
-
-
-
-
