@@ -81,6 +81,7 @@ struct ContactListView: View {
         }.onAppear {
             viewModel.fetchAllContacts()
             viewModel.getAllContacts()
+            viewModel.loadLikesFromUserDefaults()
         }
     }
 }

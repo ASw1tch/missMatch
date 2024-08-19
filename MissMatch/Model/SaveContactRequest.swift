@@ -15,6 +15,10 @@ struct SaveContactRequest: Codable, Postable {
         case userId
         case contacts
     }
+    init(userId: Int, contacts: [Contact]) {
+        self.userId = userId
+        self.contacts = contacts
+    }
 }
 
 struct Contact: Codable, Postable {

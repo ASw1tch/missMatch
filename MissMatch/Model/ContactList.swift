@@ -21,3 +21,14 @@ struct ContactList: Identifiable, Postable, Equatable{
     var itsMatch: Bool = false
     
 }
+
+struct ContactsResponse: Decodable {
+    let isSuccessful: Bool
+    let message: String
+    let contacts: [Contacts]
+}
+
+struct Contacts: Decodable {
+    let id: Int
+    let phones: [String]
+}

@@ -13,8 +13,7 @@ class ContactListViewModel: ObservableObject {
     let maxFreeHearts = 3
     
     init() {
-            self.fetchAllContacts()
-            self.loadLikesFromUserDefaults()
+        self.fetchAllContacts()
     }
     
     func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
@@ -83,7 +82,6 @@ class ContactListViewModel: ObservableObject {
                     
                     DispatchQueue.main.async {
                         self.contacts = fetchedContacts
-                        self.loadLikesFromUserDefaults()
                     }
                     
                 } catch {
@@ -131,7 +129,7 @@ class ContactListViewModel: ObservableObject {
             print("Country code is missing")
             return
         }
-    
+        
         var myNumbers = [String]()
         let myInputNumber = selectedCountryCode + phoneNumber
         myNumbers.append(myInputNumber)
@@ -164,6 +162,11 @@ class ContactListViewModel: ObservableObject {
     }
     
     func toggleMiss(contact: ContactList) {
+        guard let userId = UserDefaultsManager.shared.getUserId() else {
+            print("User ID not found.")
+            return
+        }
+        
         if let index = contacts.firstIndex(where: { $0.id == contact.id }) {
             if contacts[index].iLiked {
                 contacts[index].iLiked.toggle()
@@ -177,8 +180,16 @@ class ContactListViewModel: ObservableObject {
             }
             saveLikesToUserDefaults()
             print(heartCount)
+            
+            let contactIds = contacts.filter { $0.iLiked }.map { $0.id }
+            let likeRequest = LikeRequest(fromUserId: userId, contactIds: contactIds)
+            let postDataCase = PostDataCase.likes(likeRequest)
+            
+            NetworkManager.shared.postData(for: postDataCase)
+            
         }
     }
+    
     
     private func saveLike(contact: ContactList) {
         var savedLikes = UserDefaults.standard.array(forKey: "savedLikes") as? [Int] ?? []
@@ -197,10 +208,10 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
-   func loadLikesFromUserDefaults() {
+    func loadLikesFromUserDefaults() {
         let savedLikes = UserDefaults.standard.array(forKey: "savedLikes") as? [Int] ?? []
-       print("loading", savedLikes)
-       heartCount = savedLikes.count
+        print("loading", savedLikes)
+        heartCount = savedLikes.count
         for i in 0..<contacts.count {
             if savedLikes.contains(contacts[i].id) {
                 contacts[i].iLiked = true
