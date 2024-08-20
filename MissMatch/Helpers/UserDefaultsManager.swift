@@ -10,7 +10,7 @@ import Foundation
 class UserDefaultsManager {
     static let shared = UserDefaultsManager()
     
-    private let userIdKey = "userId"
+    private let userIdKey = "UserDefaultsManager.userIdKey"
     
     func saveUserId(_ id: Int) {
         UserDefaults.standard.set(id, forKey: userIdKey)
