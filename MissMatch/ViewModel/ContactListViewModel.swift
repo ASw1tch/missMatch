@@ -46,7 +46,6 @@ class ContactListViewModel: ObservableObject {
                 guard granted else {
                     return
                 }
-                
                 let keys = [CNContactGivenNameKey,
                             CNContactPhoneNumbersKey,
                             CNContactFamilyNameKey,
