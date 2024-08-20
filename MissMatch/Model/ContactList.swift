@@ -8,7 +8,7 @@
 import Foundation
 import CryptoKit
 
-struct ContactList: Identifiable, Postable, Equatable{
+struct ContactList: Identifiable, Postable, Equatable {
     var id: Int
     var name: String
     var surname: String
