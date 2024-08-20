@@ -39,5 +39,5 @@ struct ItsAMatchView: View {
 }
 
 #Preview {
-    ItsAMatchView(contact: ContactList(name: "Mary", surname: "Smith", phoneNumber: ["+79312444263"]))
+    ItsAMatchView(contact: ContactList(id: 22, name: "Mary", surname: "Smith", phoneNumber: ["+79312444263"]))
 }

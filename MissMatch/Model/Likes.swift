@@ -7,20 +7,21 @@
 
 import Foundation
 
-struct Likes: Codable, Postable {
-    let success: Bool 
-    let message: String
-    let likes: [LikeElement]
+struct LikeRequest: Postable {
+    let fromUserId: Int
+    let contactIds: [Int]
 }
 
-struct LikeElement: Codable, Postable {
-    let id, fromPhoneId, toPhoneId: Int
-    let created, expired: String
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case fromPhoneId
-        case toPhoneId
-        case created, expired
-    }
+struct LikeResponse: Decodable {
+    let success: Bool
+    let message: String
+    let likes: [Like]
+}
+
+struct Like: Decodable {
+    let id: Int
+    let fromPhoneId: Int
+    let toPhoneId: Int
+    let created: String
+    let expired: String
 }

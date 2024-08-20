@@ -8,8 +8,8 @@
 import Foundation
 import CryptoKit
 
-struct ContactList: Identifiable, Postable {
-    var id = UUID()
+struct ContactList: Identifiable, Postable, Equatable {
+    var id: Int
     var name: String
     var surname: String
     var phoneNumber: [String]
@@ -20,4 +20,15 @@ struct ContactList: Identifiable, Postable {
     var iLiked: Bool = false
     var itsMatch: Bool = false
     
+}
+
+struct ContactsResponse: Decodable {
+    let isSuccessful: Bool
+    let message: String
+    let contacts: [Contacts]
+}
+
+struct Contacts: Decodable {
+    let id: Int
+    let phones: [String]
 }

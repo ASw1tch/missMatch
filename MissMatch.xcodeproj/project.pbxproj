@@ -24,13 +24,14 @@
 		EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */; };
 		EA913CEA2C5FE7EA00CC90F5 /* CountryCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */; };
 		EA913CED2C62BB0700CC90F5 /* SaveContactRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CEC2C62BB0700CC90F5 /* SaveContactRequest.swift */; };
+		EAF6959A2C72865900C9ADF6 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF695992C72865900C9ADF6 /* AppConstants.swift */; };
+		EAF6959C2C73CE6600C9ADF6 /* UserDefaultsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF6959B2C73CE6600C9ADF6 /* UserDefaultsManager.swift */; };
 		EAF74E822C52F05D003A8B06 /* MissMatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E812C52F05D003A8B06 /* MissMatchApp.swift */; };
 		EAF74E862C52F062003A8B06 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EAF74E852C52F062003A8B06 /* Assets.xcassets */; };
 		EAF74E892C52F062003A8B06 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EAF74E882C52F062003A8B06 /* Preview Assets.xcassets */; };
 		EAF74E902C52F097003A8B06 /* ContactListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E8F2C52F097003A8B06 /* ContactListView.swift */; };
 		EAF74E942C52F0F3003A8B06 /* ContactListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E932C52F0F3003A8B06 /* ContactListViewModel.swift */; };
 		EAF74E962C52F117003A8B06 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E952C52F117003A8B06 /* NetworkManager.swift */; };
-		EAF74E982C52F1BD003A8B06 /* SampleContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E972C52F1BD003A8B06 /* SampleContact.swift */; };
 		EAF74E9A2C52F299003A8B06 /* ContactRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E992C52F299003A8B06 /* ContactRowView.swift */; };
 /* End PBXBuildFile section */
 
@@ -52,6 +53,8 @@
 		EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCodes.swift; sourceTree = "<group>"; };
 		EA913CEB2C61668300CC90F5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EA913CEC2C62BB0700CC90F5 /* SaveContactRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveContactRequest.swift; sourceTree = "<group>"; };
+		EAF695992C72865900C9ADF6 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		EAF6959B2C73CE6600C9ADF6 /* UserDefaultsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsManager.swift; sourceTree = "<group>"; };
 		EAF74E7E2C52F05D003A8B06 /* MissMatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MissMatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EAF74E812C52F05D003A8B06 /* MissMatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissMatchApp.swift; sourceTree = "<group>"; };
 		EAF74E852C52F062003A8B06 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -59,7 +62,6 @@
 		EAF74E8F2C52F097003A8B06 /* ContactListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactListView.swift; sourceTree = "<group>"; };
 		EAF74E932C52F0F3003A8B06 /* ContactListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactListViewModel.swift; sourceTree = "<group>"; };
 		EAF74E952C52F117003A8B06 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
-		EAF74E972C52F1BD003A8B06 /* SampleContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleContact.swift; sourceTree = "<group>"; };
 		EAF74E992C52F299003A8B06 /* ContactRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactRowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -163,10 +165,11 @@
 				EAF74E952C52F117003A8B06 /* NetworkManager.swift */,
 				EA913CE52C5E746000CC90F5 /* PhoneNumberHasher.swift */,
 				EA44672C2C557B4400735A08 /* ColorHelper.swift */,
-				EAF74E972C52F1BD003A8B06 /* SampleContact.swift */,
 				EAF74E852C52F062003A8B06 /* Assets.xcassets */,
 				EA4467382C55917100735A08 /* LottieView.swift */,
 				EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */,
+				EAF695992C72865900C9ADF6 /* AppConstants.swift */,
+				EAF6959B2C73CE6600C9ADF6 /* UserDefaultsManager.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -250,6 +253,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EAF6959C2C73CE6600C9ADF6 /* UserDefaultsManager.swift in Sources */,
 				EA19DAB32C5ACE5200D12A82 /* ContactList.swift in Sources */,
 				EA913CED2C62BB0700CC90F5 /* SaveContactRequest.swift in Sources */,
 				EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */,
@@ -268,7 +272,7 @@
 				EA913CE62C5E746000CC90F5 /* PhoneNumberHasher.swift in Sources */,
 				EA4467392C55917100735A08 /* LottieView.swift in Sources */,
 				EAF74E9A2C52F299003A8B06 /* ContactRowView.swift in Sources */,
-				EAF74E982C52F1BD003A8B06 /* SampleContact.swift in Sources */,
+				EAF6959A2C72865900C9ADF6 /* AppConstants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

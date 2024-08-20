@@ -8,20 +8,24 @@
 import Foundation
 
 protocol Postable: Encodable {}
+protocol ResponseHandler {
+    associatedtype Response: Decodable
+    func handleResponse(_ response: Response)
+}
 
 enum PostDataCase {
     case user(User)
     case contacts(SaveContactRequest)
-    case likes(Likes)
+    case likes(LikeRequest)
     
     var urlString: String {
         switch self {
         case .user:
-            return "http://51.250.55.29:8084/api/v1/users/add"
+            return K.API.userApiUrl
         case .contacts:
-            return "http://51.250.55.29:8084/api/v1/contacts/save"
+            return K.API.contactsApiUrl
         case .likes:
-            return "http://51.250.55.29:8084/api/v1/like/addAll"
+            return K.API.likesApiUrl
         }
     }
     
@@ -33,12 +37,32 @@ enum PostDataCase {
             contacts.contacts = contacts.contacts.map { contact in
                 var normalizedContact = contact
                 let normalizedPhones = NetworkManager.shared.normalizePhoneNumbers(contact.phones)
-                //normalizedContact.phones = normalizedPhones.map { PhoneNumberHasher.hashPhoneNumber($0) }
+                #if DEBUG
+                normalizedContact.phones = normalizedPhones.map { PhoneNumberHasher.hashPhoneNumber($0) }
+                #endif
                 return normalizedContact
             }
             return contacts
         case .likes(let likes):
             return likes
+        }
+    }
+    
+    func handleResponse(_ data: Data) {
+        switch self {
+        case .user:
+            if let userResponse = try? JSONDecoder().decode(UserResponse.self, from: data) {
+                UserDefaultsManager.shared.saveUserId(userResponse.id)
+                print("User ID saved: \(userResponse.id)")
+            }
+        case .contacts:
+            if let contactsResponse = try? JSONDecoder().decode(ContactsResponse.self, from: data) {
+                print("Contacts saved.")
+            }
+        case .likes:
+            if let likesResponse = try? JSONDecoder().decode(LikeResponse.self, from: data) {
+                print("Likes saved.")
+            }
         }
     }
 }
@@ -70,7 +94,11 @@ final class NetworkManager {
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                    print("Data sent successfully.")
+                    if let data = data {
+                        caseType.handleResponse(data)
+                    } else {
+                        print("No data received.")
+                    }
                 } else {
                     print(response ?? "No data")
                 }
@@ -94,7 +122,6 @@ final class NetworkManager {
                 return filtered
             }
         }
-        
         return normalizedNumbers
     }
 }

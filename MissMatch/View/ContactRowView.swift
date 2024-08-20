@@ -105,7 +105,6 @@ struct ContactRowView: View {
             return
         }
         viewModel.toggleMiss(contact: contact)
-        
         if viewModel.matched {
             viewModel.matched.toggle()
             showMatchView = true
@@ -133,7 +132,7 @@ func hearts() -> some View {
 }
 struct ContactRowView_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleContact = ContactList(name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
+        let sampleContact = ContactList(id: 22, name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
         let viewModel = ContactListViewModel()
         viewModel.contacts = [sampleContact]
         

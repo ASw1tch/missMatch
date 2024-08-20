@@ -17,6 +17,7 @@ struct ContactListView: View {
     var body: some View {
         NavigationStack {
             
+            #if DEBUG
             HStack {
                 TextField("ID", text: $testId)
                     .keyboardType(.phonePad)
@@ -46,6 +47,7 @@ struct ContactListView: View {
             }
             .padding()
             .foregroundColor(Color.primary)
+            #endif
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
@@ -79,6 +81,7 @@ struct ContactListView: View {
         }.onAppear {
             viewModel.fetchAllContacts()
             viewModel.getAllContacts()
+            viewModel.loadLikesFromUserDefaults()
         }
     }
 }

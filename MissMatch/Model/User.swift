@@ -13,3 +13,8 @@ struct User: Codable, Postable {
     var phones: [String]
 }
 
+struct UserResponse: Decodable {
+    let id: Int
+    let appleId: String
+    let created: String
+}
