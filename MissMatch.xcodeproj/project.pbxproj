@@ -24,6 +24,7 @@
 		EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */; };
 		EA913CEA2C5FE7EA00CC90F5 /* CountryCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */; };
 		EA913CED2C62BB0700CC90F5 /* SaveContactRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CEC2C62BB0700CC90F5 /* SaveContactRequest.swift */; };
+		EAA2A0DF2C7672750046F63F /* LikesRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAA2A0DE2C7672750046F63F /* LikesRepository.swift */; };
 		EAF6959A2C72865900C9ADF6 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF695992C72865900C9ADF6 /* AppConstants.swift */; };
 		EAF6959C2C73CE6600C9ADF6 /* UserDefaultsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF6959B2C73CE6600C9ADF6 /* UserDefaultsManager.swift */; };
 		EAF74E822C52F05D003A8B06 /* MissMatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF74E812C52F05D003A8B06 /* MissMatchApp.swift */; };
@@ -53,6 +54,7 @@
 		EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCodes.swift; sourceTree = "<group>"; };
 		EA913CEB2C61668300CC90F5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EA913CEC2C62BB0700CC90F5 /* SaveContactRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveContactRequest.swift; sourceTree = "<group>"; };
+		EAA2A0DE2C7672750046F63F /* LikesRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikesRepository.swift; sourceTree = "<group>"; };
 		EAF695992C72865900C9ADF6 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		EAF6959B2C73CE6600C9ADF6 /* UserDefaultsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsManager.swift; sourceTree = "<group>"; };
 		EAF74E7E2C52F05D003A8B06 /* MissMatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MissMatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -154,6 +156,7 @@
 				EA19DAB22C5ACE5200D12A82 /* ContactList.swift */,
 				EA19DAB62C5ACE7000D12A82 /* Likes.swift */,
 				EA913CEC2C62BB0700CC90F5 /* SaveContactRequest.swift */,
+				EAA2A0DE2C7672750046F63F /* LikesRepository.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -256,6 +259,7 @@
 				EAF6959C2C73CE6600C9ADF6 /* UserDefaultsManager.swift in Sources */,
 				EA19DAB32C5ACE5200D12A82 /* ContactList.swift in Sources */,
 				EA913CED2C62BB0700CC90F5 /* SaveContactRequest.swift in Sources */,
+				EAA2A0DF2C7672750046F63F /* LikesRepository.swift in Sources */,
 				EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */,
 				EAF74E942C52F0F3003A8B06 /* ContactListViewModel.swift in Sources */,
 				EAF74E902C52F097003A8B06 /* ContactListView.swift in Sources */,

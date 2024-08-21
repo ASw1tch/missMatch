@@ -79,9 +79,7 @@ struct ContactListView: View {
             }
             .scrollIndicators(.never)
         }.onAppear {
-            viewModel.fetchAllContacts()
             viewModel.getAllContacts()
-            viewModel.loadLikesFromUserDefaults()
         }
     }
 }
