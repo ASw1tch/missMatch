@@ -14,7 +14,7 @@ struct ContactList: Identifiable, Postable, Equatable {
     var surname: String
     var phoneNumber: [String]
     var hashedPhoneNumbers: [String] {
-        return phoneNumber.map { PhoneNumberHasher.hashPhoneNumber($0) }
+        return phoneNumber.map { PhoneNumberManager.hashPhoneNumber($0) }
     }
     
     var iLiked: Bool = false

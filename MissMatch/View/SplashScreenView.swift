@@ -67,7 +67,7 @@ struct SplashScreenView: View {
     }
     
     private func checkContactAuthorization() {
-        let contactStore = CNContactStore()
+        _ = CNContactStore()
         switch CNContactStore.authorizationStatus(for: .contacts) {
         case .authorized:
             proceedToNextView()

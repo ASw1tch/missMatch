@@ -28,6 +28,7 @@ class ContactListViewModel: ObservableObject {
             for contact in contacts {
                 for phoneNumber in contact.phoneNumbers {
                     let number = phoneNumber.value.stringValue
+                    let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
                     phoneNumbers.append(number)
                 }
             }
@@ -58,7 +59,8 @@ class ContactListViewModel: ObservableObject {
                     
                     try store.enumerateContacts(with: fetchRequest) { contact, _ in
                         let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
-                        let uniqueKey = "\(contact.givenName)\(contact.familyName)\(phoneNumbers.joined())"
+                        let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
+                        let uniqueKey = "\(contact.givenName)\(contact.familyName)\(normalizedPhoneNumbers.joined())"
                         
                         let contactID: Int
                         if let savedID = savedContactIDs[uniqueKey] {
@@ -73,7 +75,7 @@ class ContactListViewModel: ObservableObject {
                             id: contactID,
                             name: contact.givenName,
                             surname: contact.familyName,
-                            phoneNumber: phoneNumbers
+                            phoneNumber: normalizedPhoneNumbers
                         )
                         fetchedContacts.append(contact)
                     }
@@ -100,6 +102,8 @@ class ContactListViewModel: ObservableObject {
             do {
                 try store.enumerateContacts(with: request) { contact, stop in
                     let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
+                    let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
+                    
                     let contactItem = ContactList(
                         id: Int.random(in: 1000...9000),
                         name: contact.givenName,
@@ -132,24 +136,10 @@ class ContactListViewModel: ObservableObject {
                 myNumbers.append(contentsOf: phoneNumbers)
             }
             print("All phone numbers for the contact:", myNumbers)
-            let rawPhoneNumbers = self.normalizePhoneNumbers(myNumbers)
-            let user = User(appleId: String(Int.random(in: 100000...999999)), phones: rawPhoneNumbers)
+            let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
+            let user = User(appleId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
             NetworkManager.shared.postData(for: .user(user))
         }
-    }
-    
-    private func normalizePhoneNumbers(_ phoneNumbers: [String]) -> [String] {
-        var seenNumbers = Set<String>()
-        let normalizedNumbers = phoneNumbers.compactMap { phoneNumber -> String? in
-            let filtered = phoneNumber.filter { "+0123456789".contains($0) }
-            if seenNumbers.contains(filtered) {
-                return nil
-            } else {
-                seenNumbers.insert(filtered)
-                return filtered
-            }
-        }
-        return normalizedNumbers
     }
     
     func toggleMiss(contact: ContactList) {

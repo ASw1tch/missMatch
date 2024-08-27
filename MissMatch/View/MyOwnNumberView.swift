@@ -73,7 +73,6 @@ struct MyOwnNumberView: View {
     }
 }
 
-
 #Preview {
     MyOwnNumberView(viewModel: ContactListViewModel(), selectedCountry: Country(flag: "🇹🇻", code: "+688", name: "Tuvalu"), phoneNumber: "89923123312")
 }

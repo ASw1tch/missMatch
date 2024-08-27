@@ -29,18 +29,17 @@ enum PostDataCase {
         }
     }
     
+    
     var data: Postable {
         switch self {
         case .user(let user):
             return user
         case .contacts(var contacts):
             contacts.contacts = contacts.contacts.map { contact in
-                var normalizedContact = contact
-                let normalizedPhones = NetworkManager.shared.normalizePhoneNumbers(contact.phones)
-                #if DEBUG
-                normalizedContact.phones = normalizedPhones.map { PhoneNumberHasher.hashPhoneNumber($0) }
-                #endif
-                return normalizedContact
+                var encryptedContact = contact
+                //let hashedPhones = contact.phones.map { PhoneNumberManager.hashPhoneNumber($0) }
+                //encryptedContact.phones = hashedPhones
+                return encryptedContact
             }
             return contacts
         case .likes(let likes):
@@ -58,6 +57,7 @@ enum PostDataCase {
         case .contacts:
             if let contactsResponse = try? JSONDecoder().decode(ContactsResponse.self, from: data) {
                 print("Contacts saved.")
+                print(contactsResponse)
             }
         case .likes:
             if let likesResponse = try? JSONDecoder().decode(LikeResponse.self, from: data) {
@@ -108,20 +108,5 @@ final class NetworkManager {
         } catch {
             print("Error encoding JSON:", error)
         }
-    }
-    
-    func normalizePhoneNumbers(_ phoneNumbers: [String]) -> [String] {
-        var seenNumbers = Set<String>()
-        
-        let normalizedNumbers = phoneNumbers.compactMap { phoneNumber -> String? in
-            let filtered = phoneNumber.filter { "+0123456789".contains($0) }
-            if seenNumbers.contains(filtered) {
-                return nil
-            } else {
-                seenNumbers.insert(filtered)
-                return filtered
-            }
-        }
-        return normalizedNumbers
     }
 }
