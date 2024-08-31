@@ -20,6 +20,7 @@
 		EA4467392C55917100735A08 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4467382C55917100735A08 /* LottieView.swift */; };
 		EA44673B2C55A1D300735A08 /* ItsAMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA44673A2C55A1D300735A08 /* ItsAMatchView.swift */; };
 		EA4886C32C679190004D1D9C /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4886C22C679190004D1D9C /* SignInView.swift */; };
+		EA6203F02C8362F700A1B05C /* ContactPermissonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6203EF2C8362F700A1B05C /* ContactPermissonView.swift */; };
 		EA749BF42C56CFC900818DEB /* con3.json in Resources */ = {isa = PBXBuildFile; fileRef = EA749BF32C56CFC900818DEB /* con3.json */; };
 		EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */; };
 		EA913CEA2C5FE7EA00CC90F5 /* CountryCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */; };
@@ -49,6 +50,7 @@
 		EA4467382C55917100735A08 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
 		EA44673A2C55A1D300735A08 /* ItsAMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItsAMatchView.swift; sourceTree = "<group>"; };
 		EA4886C22C679190004D1D9C /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		EA6203EF2C8362F700A1B05C /* ContactPermissonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPermissonView.swift; sourceTree = "<group>"; };
 		EA749BF32C56CFC900818DEB /* con3.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = con3.json; sourceTree = "<group>"; };
 		EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyOwnNumberView.swift; sourceTree = "<group>"; };
 		EA913CE92C5FE7EA00CC90F5 /* CountryCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryCodes.swift; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 				EA19DAA82C598FCD00D12A82 /* PayWallView.swift */,
 				EA913CE72C5ECF2E00CC90F5 /* MyOwnNumberView.swift */,
 				EA4886C22C679190004D1D9C /* SignInView.swift */,
+				EA6203EF2C8362F700A1B05C /* ContactPermissonView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -262,6 +265,7 @@
 				EAA2A0DF2C7672750046F63F /* LikesRepository.swift in Sources */,
 				EA913CE82C5ECF2F00CC90F5 /* MyOwnNumberView.swift in Sources */,
 				EAF74E942C52F0F3003A8B06 /* ContactListViewModel.swift in Sources */,
+				EA6203F02C8362F700A1B05C /* ContactPermissonView.swift in Sources */,
 				EAF74E902C52F097003A8B06 /* ContactListView.swift in Sources */,
 				EAF74E962C52F117003A8B06 /* NetworkManager.swift in Sources */,
 				EA913CEA2C5FE7EA00CC90F5 /* CountryCodes.swift in Sources */,
@@ -431,7 +435,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -464,7 +468,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

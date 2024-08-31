@@ -12,6 +12,7 @@ struct SplashScreenView: View {
     
     @State private var isActive = false
     @State private var shouldPresentSignIn = false
+    let userID = UserDefaultsManager.shared.getUserId()
     
     var body: some View {
         ZStack {
@@ -20,9 +21,13 @@ struct SplashScreenView: View {
             VStack {
                 if isActive {
                     if shouldPresentSignIn {
-                        SignInView()
+                        ContactPermissonView()
                     } else {
-                        ContactListView()
+                        if userID != nil {
+                            ContactListView()
+                        } else {
+                            ContactPermissonView()
+                        }
                     }
                 } else {
                     ZStack {

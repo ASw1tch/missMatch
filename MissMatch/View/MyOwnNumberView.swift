@@ -7,9 +7,8 @@
 
 import SwiftUI
 
-
 struct MyOwnNumberView: View {
-    
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: ContactListViewModel
     @State var selectedCountry: Country
     @State var phoneNumber: String
@@ -19,7 +18,7 @@ struct MyOwnNumberView: View {
     
     var body: some View {
         VStack {
-            Text("Firstly choose your phone number")
+            Text("Now choose your phone number, to identitify you for likes and matches.")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
                 .bold()
@@ -45,7 +44,9 @@ struct MyOwnNumberView: View {
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
+                
             }
+            
             .padding()
             .foregroundColor(Color.primary)
             
@@ -54,17 +55,22 @@ struct MyOwnNumberView: View {
                     selectedCountryCode: selectedCountry.code,
                     phoneNumber: phoneNumber
                 )
+                hideKeyboard()
                 isPresentedList = true
             }) {
                 Text("Continue")
-                    .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color.blue)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(8)
+                    .shadow(color: colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray, radius: 3, x: 0, y: 2)
+                
             }
             .padding()
             .disabled(phoneNumber.isEmpty)
+        }
+        .onTapGesture {
+            hideKeyboard()
         }
         .padding()
         .fullScreenCover(isPresented: $isPresentedList) {
@@ -77,4 +83,9 @@ struct MyOwnNumberView: View {
     MyOwnNumberView(viewModel: ContactListViewModel(), selectedCountry: Country(flag: "🇹🇻", code: "+688", name: "Tuvalu"), phoneNumber: "89923123312")
 }
 
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
 
