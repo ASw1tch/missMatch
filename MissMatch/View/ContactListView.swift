@@ -29,10 +29,11 @@ struct ContactListView: View {
                     let contactArray: [Contact] = viewModel.contacts
                         .compactMap { contact in
                             let validPhones = contact.phoneNumber.filter { !$0.isEmpty }
+                            
                             return validPhones.isEmpty ? nil : Contact(phones: validPhones)
                         }
                     
-                    let contactRequest = SaveContactRequest(userId: Int(testId) ?? 16, contacts: contactArray)
+                    let contactRequest = SaveContactRequest(userId: UserDefaultsManager.shared.getUserId() ?? 16, contacts: contactArray)
                     NetworkManager.shared.postData(for: .contacts(contactRequest))
                 }) {
                     Text("SendData")
@@ -43,7 +44,7 @@ struct ContactListView: View {
                         .cornerRadius(8)
                 }
                 .padding()
-                .disabled(testId.isEmpty)
+//                .disabled(testId.isEmpty)
             }
             .padding()
             .foregroundColor(Color.primary)
@@ -79,9 +80,7 @@ struct ContactListView: View {
             }
             .scrollIndicators(.never)
         }.onAppear {
-            viewModel.fetchAllContacts()
             viewModel.getAllContacts()
-            viewModel.loadLikesFromUserDefaults()
         }
     }
 }

@@ -92,13 +92,38 @@ iOSInjectionProject/
 ## Xcode 8 and earlier
 
 ### Xcode Patch ###
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcodeproj/project.xcworkspace/
-!*.xcworkspace/contents.xcworkspacedata
-*.xcodeproj/xcuserdata/
-/*.gcno
-**/xcshareddata/WorkspaceSettings.xcsettings
+# Xcode
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata
+*.xcscheme
+*.xcodeproj/project.xcworkspace/xcshareddata
+*.xcodeproj/xcuserdata
+*.xcodeproj/xcshareddata
+*.xcodeproj/xcuserdata
+*.xcodeproj/xcshareddata/
+*.xcodeproj/xcshareddata/xcschemes/
+*.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+*.xcodeproj/project.xcworkspace
+*.xcodeproj/project.xcworkspace/xcshareddata
+*.xcuserdatad
+
+# Other
+*.swp
+*.swo
+*.DS_Store
+*.mds
+*.mdd
+*.plst
+*.ipch
+*.hmap
+*.dSYM/
+*.tmp
+*.log
+
+# Derived data
+DerivedData/
+build/
+
 
 # End of https://www.toptal.com/developers/gitignore/api/xcode,swift

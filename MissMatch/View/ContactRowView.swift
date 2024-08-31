@@ -27,6 +27,8 @@ struct ContactRowView: View {
     @State private var showMatchView = false
     @State private var showPaywall = false
     
+    private let likesRepository = LikesRepository()
+    
     var contact: ContactList
     
     var heartState: HeartState {
@@ -79,7 +81,7 @@ struct ContactRowView: View {
                         )
                     }
                     .fullScreenCover(isPresented: $showPaywall) {
-                        PayWallView() // Ваш экран с оплатой
+                        PayWallView()
                     }
             }
         }
@@ -100,7 +102,7 @@ struct ContactRowView: View {
             viewModel.toggleMiss(contact: contact)
             return
         }
-        guard viewModel.heartCount < viewModel.maxFreeHearts else {
+        guard likesRepository.canLike() else {
             showAlert = true
             return
         }
