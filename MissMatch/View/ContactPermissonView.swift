@@ -1,5 +1,5 @@
 //
-//  ContactPermissonView.swift
+//  ContactPermissionView.swift
 //  MissMatch
 //
 //  Created by Anatoliy Petrov on 31.8.24..
