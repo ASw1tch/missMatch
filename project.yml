@@ -1,0 +1,51 @@
+APP_NAME: &APP_NAME MissMatch
+DEVELOPMENT_TEAM: &DEVELOPMENT_TEAM 5V5EUT3ZXJ
+BUNDLE_ID_PREFIX: &BUNDLE_ID_PREFIX aswitch.me
+
+settings:
+  base:
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: "0.1"
+    DEVELOPMENT_TEAM: *DEVELOPMENT_TEAM
+
+packages:
+  lottie-ios:
+    url: https://github.com/airbnb/lottie-ios
+    from: 4.5.0
+
+name: *APP_NAME
+
+options:
+  bundleIdPrefix: *BUNDLE_ID_PREFIX
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: 17.4
+
+targets:
+  *APP_NAME:
+    type: application
+    platform: iOS
+    sources:
+      - path: MissMatch
+    info:
+      path: MissMatch/Info.plist
+      properties:
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UILaunchStoryboardName: LaunchScreen
+        NSContactsUsageDescription: Contacts permission is needed to be able to send likes to missing ones.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+          NSExceptionDomains: 
+            51.250.55.29: 
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: 1
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: false
+        CODE_SIGN_ENTITLEMENTS: MissMatch/MissMatch.entitlements
+    dependencies:
+      - package: lottie-ios
+        product: Lottie
