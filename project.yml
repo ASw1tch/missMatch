@@ -28,7 +28,7 @@ targets:
     sources:
       - path: MissMatch
     info:
-      path: iOS/Info.plist
+      path: MissMatch/Info.plist
       properties:
         CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
