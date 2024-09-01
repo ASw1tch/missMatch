@@ -1,0 +1,142 @@
+diff --git a/MissMatch/Helpers/AppConstants.swift b/MissMatch/Helpers/AppConstants.swift
+index 6042e39..fe1acb2 100644
+--- a/MissMatch/Helpers/AppConstants.swift
++++ b/MissMatch/Helpers/AppConstants.swift
+@@ -8,9 +8,10 @@
+ import Foundation
+ 
+ struct K {
+-    struct API {
++    struct API { // better to choose enum
+         static let userApiUrl = "http://51.250.55.29:8084/api/v1/users/add"
+         static let contactsApiUrl = "http://51.250.55.29:8084/api/v1/contacts/save"
+         static let likesApiUrl = "http://51.250.55.29:8084/api/v1/like/addAll"
++        static let authCodeApiUrl = "http://51.250.55.29:8084/api/v1/users/create"
+     }
+ }
+diff --git a/MissMatch/Helpers/NetworkManager.swift b/MissMatch/Helpers/NetworkManager.swift
+index ed0ba0e..df4d4da 100644
+--- a/MissMatch/Helpers/NetworkManager.swift
++++ b/MissMatch/Helpers/NetworkManager.swift
+@@ -17,6 +17,7 @@ enum PostDataCase {
+     case user(User)
+     case contacts(SaveContactRequest)
+     case likes(LikeRequest)
++    case authorizationCode(String)
+     
+     var urlString: String {
+         switch self {
+@@ -26,6 +27,8 @@ enum PostDataCase {
+             return K.API.contactsApiUrl
+         case .likes:
+             return K.API.likesApiUrl
++        case .authorizationCode:
++            return K.API.authCodeApiUrl
+         }
+     }
+     
+@@ -44,6 +47,8 @@ enum PostDataCase {
+             return contacts
+         case .likes(let likes):
+             return likes
++        case .authorizationCode(let code):
++            return AuthorizationCodeRequest(authorizationCode: code)
+         }
+     }
+     
+@@ -63,6 +68,16 @@ enum PostDataCase {
+             if let likesResponse = try? JSONDecoder().decode(LikeResponse.self, from: data) {
+                 print("Likes saved.")
+             }
++        case .authorizationCode:
++            if let authResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
++                if authResponse.success {
++                    print("Authorization successful.")
++                    // Handle successful authorization
++                } else {
++                    print("Authorization failed.")
++                    // Handle failed authorization
++                }
++            }
+         }
+     }
+ }
+@@ -82,6 +97,10 @@ final class NetworkManager {
+         request.httpMethod = "POST"
+         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+         request.setValue("*/*", forHTTPHeaderField: "accept")
++        if case let .authorizationCode(code) = caseType {
++            let authHeader = "Bearer \(code)" // Пример, замените на ваш формат
++            request.setValue(authHeader, forHTTPHeaderField: "Authorization")
++        }
+         do {
+             let jsonData = try JSONEncoder().encode(caseType.data)
+             print("Encoded JSON: \(String(data: jsonData, encoding: .utf8) ?? "N/A")")
+diff --git a/MissMatch/Model/AuthorizationCode.swift b/MissMatch/Model/AuthorizationCode.swift
+index d2b017c..d436a01 100644
+--- a/MissMatch/Model/AuthorizationCode.swift
++++ b/MissMatch/Model/AuthorizationCode.swift
+@@ -6,3 +6,11 @@
+ //
+ 
+ import Foundation
++
++struct AuthorizationCodeRequest: Postable {
++    let authorizationCode: String
++}
++
++struct AuthResponse: Decodable {
++    let success: Bool
++}
+diff --git a/MissMatch/View/SignInView.swift b/MissMatch/View/SignInView.swift
+index 34c2734..98f3177 100644
+--- a/MissMatch/View/SignInView.swift
++++ b/MissMatch/View/SignInView.swift
+@@ -51,9 +51,28 @@ struct SignInView: View {
+     private func handleAuthorization(_ authResults: ASAuthorization) {
+         if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
+             let userId = appleIDCredential.user
++            let identityToken = appleIDCredential.identityToken
++            let authorizationCode = appleIDCredential.authorizationCode
++            
++            let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
++            
++            
++            print("appleIDCredential.authorizationCode: \(authorizationCodeString)")
++            
++            
++            // Сохраните userId, если нужно
+             UserDefaultsManager.shared.saveAppleId(userId)
++            
++            // Теперь отправьте identityTokenString на ваш сервер
++            sendToServer(authorizationCode: authorizationCodeString)
+         }
+     }
++    
++    private func sendToServer(authorizationCode: String) {
++        // Create an instance of the enum with the authorization code
++        let postDataCase = PostDataCase.authorizationCode(authorizationCode)
++        NetworkManager.shared.postData(for: postDataCase)
++    }
+ }
+ 
+ struct SecureTextAnimationView: View {
+diff --git a/project.yml b/project.yml
+index 80fc5bd..fb306ca 100644
+--- a/project.yml
++++ b/project.yml
+@@ -1,5 +1,5 @@
+ APP_NAME: &APP_NAME MissMatch
+-DEVELOPMENT_TEAM: &DEVELOPMENT_TEAM 5V5EUT3ZXJ
++DEVELOPMENT_TEAM: &DEVELOPMENT_TEAM RWP28CYWVZ
+ BUNDLE_ID_PREFIX: &BUNDLE_ID_PREFIX aswitch.me
+ 
+ settings:
+@@ -7,6 +7,7 @@ settings:
+     CURRENT_PROJECT_VERSION: 1
+     MARKETING_VERSION: "0.1"
+     DEVELOPMENT_TEAM: *DEVELOPMENT_TEAM
++    IDEPreferLogStreaming: YES 
+ 
+ packages:
+   lottie-ios:

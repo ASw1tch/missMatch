@@ -17,6 +17,7 @@ enum PostDataCase {
     case user(User)
     case contacts(SaveContactRequest)
     case likes(LikeRequest)
+    case authorizationCode(String)
     
     var urlString: String {
         switch self {
@@ -26,6 +27,8 @@ enum PostDataCase {
             return K.API.contactsApiUrl
         case .likes:
             return K.API.likesApiUrl
+        case .authorizationCode:
+            return K.API.authCodeApiUrl
         }
     }
     
@@ -44,6 +47,8 @@ enum PostDataCase {
             return contacts
         case .likes(let likes):
             return likes
+        case .authorizationCode(let code):
+            return AuthorizationCodeRequest(authorizationCode: code)
         }
     }
     
@@ -62,6 +67,16 @@ enum PostDataCase {
         case .likes:
             if let likesResponse = try? JSONDecoder().decode(LikeResponse.self, from: data) {
                 print("Likes saved.")
+            }
+        case .authorizationCode:
+            if let authResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
+                if authResponse.success {
+                    print("Authorization successful.")
+                    // Handle successful authorization
+                } else {
+                    print("Authorization failed.")
+                    // Handle failed authorization
+                }
             }
         }
     }
@@ -82,6 +97,10 @@ final class NetworkManager {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("*/*", forHTTPHeaderField: "accept")
+        if case let .authorizationCode(code) = caseType {
+            let authHeader = "Bearer \(code)" // Пример, замените на ваш формат
+            request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        }
         do {
             let jsonData = try JSONEncoder().encode(caseType.data)
             print("Encoded JSON: \(String(data: jsonData, encoding: .utf8) ?? "N/A")")
