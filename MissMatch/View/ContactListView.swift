@@ -44,7 +44,6 @@ struct ContactListView: View {
                         .cornerRadius(8)
                 }
                 .padding()
-//                .disabled(testId.isEmpty)
             }
             .padding()
             .foregroundColor(Color.primary)
