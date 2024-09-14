@@ -9,9 +9,9 @@ import Foundation
 
 struct K {
     struct API { // better to choose enum
-        static let userApiUrl = "http://51.250.55.29:8084/api/v1/users/add"
-        static let contactsApiUrl = "http://51.250.55.29:8084/api/v1/contacts/save"
-        static let likesApiUrl = "http://51.250.55.29:8084/api/v1/like/addAll"
-        static let authCodeApiUrl = "http://51.250.55.29:8084/api/v1/users/create"
+        static let userApiUrl = "https://gen05.com/api/v1/users/add"
+        static let contactsApiUrl = "https://gen05.com/api/v1/contacts/save"
+        static let likesApiUrl = "https://gen05.com/api/v1/like/addAll"
+        static let authCodeApiUrl = "https://gen05.com/api/v1/users/create"
     }
 }

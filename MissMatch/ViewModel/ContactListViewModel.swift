@@ -137,8 +137,8 @@ class ContactListViewModel: ObservableObject {
             }
             print("All phone numbers for the contact:", myNumbers)
             let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
-            let user = User(appleId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
-            NetworkManager.shared.postData(for: .user(user))
+            //let user = User(refreshToken: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
+           // NetworkManager.shared.postData(for: .user(user))
         }
     }
     

@@ -54,6 +54,7 @@ struct SignInView: View {
             let identityToken = appleIDCredential.identityToken
             let authorizationCode = appleIDCredential.authorizationCode
             
+            
             let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
             
             

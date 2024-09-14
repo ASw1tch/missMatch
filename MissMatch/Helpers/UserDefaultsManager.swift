@@ -13,6 +13,8 @@ class UserDefaultsManager {
     private let userIdKey = "UserDefaultsManager.userIdKey"
     private let appleIdKey = "UserDefaultsManager.appleIdKey"
     private let contactIdsKey = "UserDefaultsManager.contactIdsKey"
+    private let refreshTokenKey = "UserDefaultsManager.refreshTokenKey"
+    
     
     func saveUserId(_ id: Int) {
         UserDefaults.standard.set(id, forKey: userIdKey)
@@ -37,5 +39,13 @@ class UserDefaultsManager {
     
     func getContactIds() -> [String: Int]? {
         return UserDefaults.standard.dictionary(forKey: contactIdsKey) as? [String: Int]
+    }
+    
+    func saveRefreshToken(_ appleId: String) {
+        UserDefaults.standard.set(appleId, forKey: appleIdKey)
+    }
+    
+    func getRefreshToken() -> String? {
+        return UserDefaults.standard.string(forKey: appleIdKey)
     }
 }

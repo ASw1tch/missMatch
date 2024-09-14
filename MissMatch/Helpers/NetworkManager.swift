@@ -70,13 +70,13 @@ enum PostDataCase {
             }
         case .authorizationCode:
             if let authResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
-                if authResponse.success {
+                UserDefaultsManager.shared.saveRefreshToken(authResponse.refreshToken)
                     print("Authorization successful.")
-                    // Handle successful authorization
-                } else {
-                    print("Authorization failed.")
-                    // Handle failed authorization
-                }
+                    print("Message: \(authResponse.message)")
+                    print("UserID: \(authResponse.userID)")
+                print("Refresh Token saved in UserDefaults: \(String(describing: UserDefaultsManager.shared.getRefreshToken()))")
+            } else {
+                print("Failed to decode AuthResponse.")
             }
         }
     }
@@ -98,8 +98,21 @@ final class NetworkManager {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("*/*", forHTTPHeaderField: "accept")
         if case let .authorizationCode(code) = caseType {
-            let authHeader = "Bearer \(code)" // Пример, замените на ваш формат
+            // Добавляем authorizationCode в заголовок
+            let authHeader = "\(code)"
             request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+            
+            // Получаем appleID из UserDefaults
+            if let appleIdUser = UserDefaultsManager().getAppleId() {
+                // Устанавливаем appleID как тело запроса напрямую (без JSON-обработки)
+                request.httpBody = appleIdUser.data(using: .utf8)
+                
+                // Для отладки выводим authorizationCode и appleID
+                print("Authorization Code: \(code)")
+                print("Тело запроса (appleID): \(appleIdUser)")
+            } else {
+                print("AppleID не найден в UserDefaults.")
+            }
         }
         do {
             let jsonData = try JSONEncoder().encode(caseType.data)
