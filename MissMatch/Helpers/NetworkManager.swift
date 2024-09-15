@@ -17,6 +17,7 @@ enum PostDataCase {
     case user(User)
     case contacts(SaveContactRequest)
     case likes(LikeRequest)
+    case authorizationCode(String)
     
     var urlString: String {
         switch self {
@@ -26,6 +27,8 @@ enum PostDataCase {
             return K.API.contactsApiUrl
         case .likes:
             return K.API.likesApiUrl
+        case .authorizationCode:
+            return K.API.authCodeApiUrl
         }
     }
     
@@ -44,6 +47,8 @@ enum PostDataCase {
             return contacts
         case .likes(let likes):
             return likes
+        case .authorizationCode(let code):
+            return AuthorizationCodeRequest(authorizationCode: code)
         }
     }
     
@@ -62,6 +67,16 @@ enum PostDataCase {
         case .likes:
             if let likesResponse = try? JSONDecoder().decode(LikeResponse.self, from: data) {
                 print("Likes saved.")
+            }
+        case .authorizationCode:
+            if let authResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
+                UserDefaultsManager.shared.saveRefreshToken(authResponse.refreshToken)
+                    print("Authorization successful.")
+                    print("Message: \(authResponse.message)")
+                    print("UserID: \(authResponse.userID)")
+                print("Refresh Token saved in UserDefaults: \(String(describing: UserDefaultsManager.shared.getRefreshToken()))")
+            } else {
+                print("Failed to decode AuthResponse.")
             }
         }
     }
@@ -82,6 +97,23 @@ final class NetworkManager {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("*/*", forHTTPHeaderField: "accept")
+        if case let .authorizationCode(code) = caseType {
+            // Добавляем authorizationCode в заголовок
+            let authHeader = "\(code)"
+            request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+            
+            // Получаем appleID из UserDefaults
+            if let appleIdUser = UserDefaultsManager().getAppleId() {
+                // Устанавливаем appleID как тело запроса напрямую (без JSON-обработки)
+                request.httpBody = appleIdUser.data(using: .utf8)
+                
+                // Для отладки выводим authorizationCode и appleID
+                print("Authorization Code: \(code)")
+                print("Тело запроса (appleID): \(appleIdUser)")
+            } else {
+                print("AppleID не найден в UserDefaults.")
+            }
+        }
         do {
             let jsonData = try JSONEncoder().encode(caseType.data)
             print("Encoded JSON: \(String(data: jsonData, encoding: .utf8) ?? "N/A")")

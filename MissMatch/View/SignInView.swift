@@ -51,8 +51,28 @@ struct SignInView: View {
     private func handleAuthorization(_ authResults: ASAuthorization) {
         if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
             let userId = appleIDCredential.user
+            let identityToken = appleIDCredential.identityToken
+            let authorizationCode = appleIDCredential.authorizationCode
+            
+            
+            let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
+            
+            
+            print("appleIDCredential.authorizationCode: \(authorizationCodeString)")
+            
+            
+            // Сохраните userId, если нужно
             UserDefaultsManager.shared.saveAppleId(userId)
+            
+            // Теперь отправьте identityTokenString на ваш сервер
+            sendToServer(authorizationCode: authorizationCodeString)
         }
+    }
+    
+    private func sendToServer(authorizationCode: String) {
+        // Create an instance of the enum with the authorization code
+        let postDataCase = PostDataCase.authorizationCode(authorizationCode)
+        NetworkManager.shared.postData(for: postDataCase)
     }
 }
 
