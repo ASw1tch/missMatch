@@ -9,12 +9,10 @@ import Foundation
 import CryptoKit
 
 struct User: Codable, Postable {
-    var refreshToken: String
+    var userId: String
     var phones: [String]
 }
 
 struct UserResponse: Decodable {
-    let id: Int
-    let refreshToken: String
-    let created: String
+    let message: String
 }

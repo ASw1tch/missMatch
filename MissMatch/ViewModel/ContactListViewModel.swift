@@ -56,6 +56,7 @@ class ContactListViewModel: ObservableObject {
                 do {
                     var fetchedContacts: [ContactList] = []
                     var savedContactIDs = UserDefaults.standard.dictionary(forKey: "savedContactIDs") as? [String: Int] ?? [:]
+                    var savedContacts: [SavedContact] = [] // Массив для сохраненных контактов
                     
                     try store.enumerateContacts(with: fetchRequest) { contact, _ in
                         let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
@@ -78,11 +79,18 @@ class ContactListViewModel: ObservableObject {
                             phoneNumber: normalizedPhoneNumbers
                         )
                         fetchedContacts.append(contact)
+                        
+                        // Создаем объект SavedContact для каждого контакта
+                        let savedContact = SavedContact(id: contactID, phones: normalizedPhoneNumbers)
+                        savedContacts.append(savedContact)
                     }
                     
                     DispatchQueue.main.async {
                         self.contacts = fetchedContacts
                         self.loadLikes()
+                        
+                        // Отправляем контакты на сервер
+                        self.sendContactsToServer(savedContacts: savedContacts)
                     }
                     
                 } catch {
@@ -90,6 +98,21 @@ class ContactListViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    func sendContactsToServer(savedContacts: [SavedContact]) {
+        // Получаем userId, который нужно передать в запросе
+        guard let userId = UserDefaultsManager.shared.getAppleId() else {
+            print("User ID not found")
+            return
+        }
+        
+        // Создаем объект SaveContactRequest
+        let saveContactRequest = SaveContactRequest(userId: userId, contacts: savedContacts)
+        
+        // Отправляем данные через NetworkManager
+        let networkManager = NetworkManager.shared
+        networkManager.postData(for: .contacts(saveContactRequest))
     }
     
     func getAllContacts() {
@@ -137,8 +160,9 @@ class ContactListViewModel: ObservableObject {
             }
             print("All phone numbers for the contact:", myNumbers)
             let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
-            //let user = User(refreshToken: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
-           // NetworkManager.shared.postData(for: .user(user))
+            let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
+            print("My contacts is under \(user) credential")
+            NetworkManager.shared.postData(for: .user(user))
         }
     }
     

@@ -32,7 +32,6 @@ enum PostDataCase {
         }
     }
     
-    
     var data: Postable {
         switch self {
         case .user(let user):
@@ -40,8 +39,8 @@ enum PostDataCase {
         case .contacts(var contacts):
             contacts.contacts = contacts.contacts.map { contact in
                 var encryptedContact = contact
-                //let hashedPhones = contact.phones.map { PhoneNumberManager.hashPhoneNumber($0) }
-                //encryptedContact.phones = hashedPhones
+//                let hashedPhones = contact.phones.map { PhoneNumberManager.hashPhoneNumber($0) }
+//                encryptedContact.phones = hashedPhones
                 return encryptedContact
             }
             return contacts
@@ -56,8 +55,7 @@ enum PostDataCase {
         switch self {
         case .user:
             if let userResponse = try? JSONDecoder().decode(UserResponse.self, from: data) {
-                UserDefaultsManager.shared.saveUserId(userResponse.id)
-                print("User ID saved: \(userResponse.id)")
+                print("User ID saved: \(userResponse.message)")
             }
         case .contacts:
             if let contactsResponse = try? JSONDecoder().decode(ContactsResponse.self, from: data) {
@@ -71,9 +69,6 @@ enum PostDataCase {
         case .authorizationCode:
             if let authResponse = try? JSONDecoder().decode(AuthResponse.self, from: data) {
                 UserDefaultsManager.shared.saveRefreshToken(authResponse.refreshToken)
-                    print("Authorization successful.")
-                    print("Message: \(authResponse.message)")
-                    print("UserID: \(authResponse.userID)")
                 print("Refresh Token saved in UserDefaults: \(String(describing: UserDefaultsManager.shared.getRefreshToken()))")
             } else {
                 print("Failed to decode AuthResponse.")
@@ -97,27 +92,37 @@ final class NetworkManager {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("*/*", forHTTPHeaderField: "accept")
+        
+        if let refreshToken = UserDefaultsManager.shared.getRefreshToken(), !refreshToken.isEmpty {
+            print("Using method with refresh token")
+            request.setValue(refreshToken, forHTTPHeaderField: "Authorization")
+            do {
+                let jsonData = try JSONEncoder().encode(caseType.data)
+                request.httpBody = jsonData
+                print(jsonData)
+            } catch {
+                print("Ошибка кодирования JSON: \(error.localizedDescription)")
+                return
+            }
+        } else {
+            print("Refresh token is not found.")
+        }
+    
         if case let .authorizationCode(code) = caseType {
-            // Добавляем authorizationCode в заголовок
-            let authHeader = "\(code)"
-            request.setValue(authHeader, forHTTPHeaderField: "Authorization")
-            
-            // Получаем appleID из UserDefaults
             if let appleIdUser = UserDefaultsManager().getAppleId() {
-                // Устанавливаем appleID как тело запроса напрямую (без JSON-обработки)
                 request.httpBody = appleIdUser.data(using: .utf8)
-                
-                // Для отладки выводим authorizationCode и appleID
+                let authHeader = "\(code)"
+                request.setValue(authHeader, forHTTPHeaderField: "Authorization")
                 print("Authorization Code: \(code)")
-                print("Тело запроса (appleID): \(appleIdUser)")
             } else {
-                print("AppleID не найден в UserDefaults.")
+                print("Apple ID не найден, требуется повторный вход в систему.")
+                return
             }
         }
+        
         do {
             let jsonData = try JSONEncoder().encode(caseType.data)
             print("Encoded JSON: \(String(data: jsonData, encoding: .utf8) ?? "N/A")")
-            request.httpBody = jsonData
             
             let task = URLSession.shared.dataTask(with: request) { data, response, error in
                 if let error = error {

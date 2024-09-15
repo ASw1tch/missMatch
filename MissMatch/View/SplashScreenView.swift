@@ -12,7 +12,7 @@ struct SplashScreenView: View {
     
     @State private var isActive = false
     @State private var shouldPresentSignIn = false
-    let userID = UserDefaultsManager.shared.getUserId()
+    let userID = UserDefaultsManager.shared.getAppleId()
     
     var body: some View {
         ZStack {

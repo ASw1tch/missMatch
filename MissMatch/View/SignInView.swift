@@ -44,7 +44,6 @@ struct SignInView: View {
                 }
                 .frame(height: 45)
                 .padding()
-        
         }
     }
     
@@ -54,13 +53,7 @@ struct SignInView: View {
             let identityToken = appleIDCredential.identityToken
             let authorizationCode = appleIDCredential.authorizationCode
             
-            
             let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
-            
-            
-            print("appleIDCredential.authorizationCode: \(authorizationCodeString)")
-            
-            
             // Сохраните userId, если нужно
             UserDefaultsManager.shared.saveAppleId(userId)
             

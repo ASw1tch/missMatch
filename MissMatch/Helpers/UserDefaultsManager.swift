@@ -42,10 +42,10 @@ class UserDefaultsManager {
     }
     
     func saveRefreshToken(_ appleId: String) {
-        UserDefaults.standard.set(appleId, forKey: appleIdKey)
+        UserDefaults.standard.set(appleId, forKey: refreshTokenKey)
     }
     
     func getRefreshToken() -> String? {
-        return UserDefaults.standard.string(forKey: appleIdKey)
+        return UserDefaults.standard.string(forKey: refreshTokenKey)
     }
 }

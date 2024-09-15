@@ -16,39 +16,6 @@ struct ContactListView: View {
     
     var body: some View {
         NavigationStack {
-            
-            #if DEBUG
-            HStack {
-                TextField("ID", text: $testId)
-                    .keyboardType(.phonePad)
-                    .bold()
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                Button(action: {
-                    let contactArray: [Contact] = viewModel.contacts
-                        .compactMap { contact in
-                            let validPhones = contact.phoneNumber.filter { !$0.isEmpty }
-                            
-                            return validPhones.isEmpty ? nil : Contact(phones: validPhones)
-                        }
-                    
-                    let contactRequest = SaveContactRequest(userId: UserDefaultsManager.shared.getUserId() ?? 16, contacts: contactArray)
-                    NetworkManager.shared.postData(for: .contacts(contactRequest))
-                }) {
-                    Text("SendData")
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                }
-                .padding()
-            }
-            .padding()
-            .foregroundColor(Color.primary)
-            #endif
-            
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("I miss...")
