@@ -111,8 +111,7 @@ class ContactListViewModel: ObservableObject {
         let saveContactRequest = SaveContactRequest(userId: userId, contacts: savedContacts)
         
         // Отправляем данные через NetworkManager
-        let networkManager = NetworkManager.shared
-        networkManager.postData(for: .contacts(saveContactRequest))
+        
     }
     
     func getAllContacts() {
@@ -162,7 +161,7 @@ class ContactListViewModel: ObservableObject {
             let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
             let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
             print("My contacts is under \(user) credential")
-            NetworkManager.shared.postData(for: .user(user))
+            
         }
     }
     
@@ -186,8 +185,8 @@ class ContactListViewModel: ObservableObject {
             loadLikes()
             
             let contactIds = contacts.filter { $0.iLiked }.map { $0.id }
-            let likeRequest = LikeRequest(fromUserId: userId, contactIds: contactIds)
-            NetworkManager.shared.postData(for: .likes(likeRequest))
+            //let likeRequest = LikeRequest(fromUserId: userId, contactIds: contactIds)
+            //NetworkManager.shared.postData(for: .likes(likeRequest))
         }
     }
     

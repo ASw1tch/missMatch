@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SaveContactRequest: Codable, Postable {
+struct SaveContactRequest: Codable {
     let userId: String
     var contacts: [SavedContact]
     

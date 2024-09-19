@@ -14,6 +14,9 @@ struct SignInView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var currentNonce: String?
     @State private var isProceed = false
+    @State private var isLoading = false
+    @State private var showErrorPopup = false
+    @State private var errorMessage = ""
     
     var body: some View {
             VStack {
@@ -37,6 +40,8 @@ struct SignInView: View {
                 .signInWithAppleButtonStyle(
                     colorScheme == .dark ? .white : .black
                 )
+                .loading(isLoading: $isLoading)
+                .popup(isShowing: $showErrorPopup, message: errorMessage)
                 .fullScreenCover(isPresented: $isProceed) {
                     MyOwnNumberView(viewModel: ContactListViewModel(),
                                     selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
@@ -50,22 +55,56 @@ struct SignInView: View {
     private func handleAuthorization(_ authResults: ASAuthorization) {
         if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
             let userId = appleIDCredential.user
-            let identityToken = appleIDCredential.identityToken
             let authorizationCode = appleIDCredential.authorizationCode
-            
             let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
-            // Сохраните userId, если нужно
+            
             UserDefaultsManager.shared.saveAppleId(userId)
             
-            // Теперь отправьте identityTokenString на ваш сервер
             sendToServer(authorizationCode: authorizationCodeString)
         }
     }
     
     private func sendToServer(authorizationCode: String) {
-        // Create an instance of the enum with the authorization code
-        let postDataCase = PostDataCase.authorizationCode(authorizationCode)
-        NetworkManager.shared.postData(for: postDataCase)
+        guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
+            showErrorPopup = true
+            errorMessage = "Apple ID is not found."
+            return
+        }
+        
+       
+        guard let requestBody = appleIdUser.data(using: .utf8) else {
+            showErrorPopup = true
+            errorMessage = "Can't convert Apple ID to Data."
+            return
+        }
+        
+        isLoading = true
+        let headers: [HTTPHeaderField: String] = [
+            .authorization: authorizationCode,
+            .contentType: HTTPHeaderValue.json.rawValue
+        ]
+        
+        NetworkManager.shared.sendRequest(
+            to: K.API.authCodeApiUrl,
+            method: .POST,
+            headers: headers,
+            body: requestBody,
+            responseType: AuthResponse.self
+        ) { result in
+            DispatchQueue.main.async {
+                self.isLoading = false  // Выключаем лоадер
+                switch result {
+                case .success(let response):
+                    UserDefaultsManager.shared.saveRefreshToken(response.refreshToken)
+                    // Переход на другой экран или обновление UI
+                    showErrorPopup = true
+                    errorMessage = "ПОЛУЧИЛОСЬ"
+                case .failure(let error):
+                    self.showErrorPopup = true
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 }
 

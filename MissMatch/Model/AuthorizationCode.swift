@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AuthorizationCodeRequest: Postable {
+struct AuthorizationCodeRequest: Codable {
     let authorizationCode: String?
 }
 
