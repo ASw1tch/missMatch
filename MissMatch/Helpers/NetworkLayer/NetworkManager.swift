@@ -17,8 +17,7 @@ final class NetworkManager {
         to urlString: String,
         method: HTTPMethod = .GET,
         headers: [HTTPHeaderField: String] = [
-            .contentType: HTTPHeaderValue.json.rawValue,
-            .accept: HTTPHeaderValue.acceptAll.rawValue
+            .contentType: HTTPHeaderValue.json.rawValue
         ],
         body: Data? = nil,
         responseType: T.Type,
@@ -28,6 +27,7 @@ final class NetworkManager {
             completion(.failure(.invalidURL))
             return
         }
+        print(request.description)
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             let result = ResponseHandler.handleResponse(data, response: response, error: error, responseType: responseType)

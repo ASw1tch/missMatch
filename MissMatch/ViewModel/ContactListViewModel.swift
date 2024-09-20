@@ -2,6 +2,7 @@ import Foundation
 import Contacts
 import CoreTelephony
 
+
 class ContactListViewModel: ObservableObject {
     
     @Published var contacts: [ContactList] = []
@@ -15,30 +16,7 @@ class ContactListViewModel: ObservableObject {
         self.fetchAllContacts()
     }
     
-    func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
         
-        let store = CNContactStore()
-        let predicate = CNContact.predicateForContacts(matching: CNPhoneNumber(stringValue: phoneNumber))
-        let keysToFetch = [CNContactPhoneNumbersKey as CNKeyDescriptor]
-        
-        do {
-            let contacts = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
-            var phoneNumbers: [String] = []
-            
-            for contact in contacts {
-                for phoneNumber in contact.phoneNumbers {
-                    let number = phoneNumber.value.stringValue
-                    let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
-                    phoneNumbers.append(number)
-                }
-            }
-            completion(phoneNumbers)
-        } catch {
-            print("Failed to fetch contact, error: \(error)")
-            completion([])
-        }
-    }
-    
     func fetchAllContacts() {
         DispatchQueue.global(qos: .userInitiated).async {
             let store = CNContactStore()
@@ -140,30 +118,7 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
-    func handleContinueAction(selectedCountryCode: String?, phoneNumber: String) {
-        
-        guard let selectedCountryCode = selectedCountryCode else {
-            print("Country code is missing")
-            return
-        }
-        
-        var myNumbers = [String]()
-        let myInputNumber = selectedCountryCode + phoneNumber
-        myNumbers.append(myInputNumber)
-        
-        findContactPhoneNumbers(for: myInputNumber) { phoneNumbers in
-            if phoneNumbers.isEmpty {
-                myNumbers.append(myInputNumber)
-            } else {
-                myNumbers.append(contentsOf: phoneNumbers)
-            }
-            print("All phone numbers for the contact:", myNumbers)
-            let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
-            let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
-            print("My contacts is under \(user) credential")
-            
-        }
-    }
+    
     
     func toggleMiss(contact: ContactList) {
         guard let userId = UserDefaultsManager.shared.getUserId() else {

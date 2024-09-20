@@ -26,6 +26,10 @@ struct ResponseHandler {
             return .failure(.noData)
         }
         
+        if responseType == String.self, let responseString = String(data: data, encoding: .utf8) {
+            return .success(responseString as! T)
+        }
+        
         do {
             let decodedData = try JSONDecoder().decode(T.self, from: data)
             return .success(decodedData)

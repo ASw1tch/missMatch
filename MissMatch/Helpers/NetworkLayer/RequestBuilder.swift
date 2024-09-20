@@ -25,7 +25,7 @@ struct RequestBuilder {
         var updatedHeaders = headers.mapValues { $0 }
         
         if let refreshToken = UserDefaultsManager.shared.getRefreshToken(), !refreshToken.isEmpty {
-            updatedHeaders[.authorization] = "Bearer \(refreshToken)"
+            updatedHeaders[.authorization] = "\(refreshToken)"
         }
         
         request.allHTTPHeaderFields = updatedHeaders.mapKeys { $0.rawValue }

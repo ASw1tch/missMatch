@@ -19,36 +19,38 @@ struct SignInView: View {
     @State private var errorMessage = ""
     
     var body: some View {
-            VStack {
-                SecureTextAnimationView()
-                SignInWithAppleButton(
-                    .signIn,
-                    onRequest: { request in
-                        request.requestedScopes = [.fullName, .email]
-                    },
-                    onCompletion: { result in
-                        switch result {
-                        case .success(let authResults):
-                            handleAuthorization(authResults)
+        VStack {
+            SecureTextAnimationView()
+            SignInWithAppleButton(
+                .signIn,
+                onRequest: { request in
+                    request.requestedScopes = [.fullName, .email]
+                },
+                onCompletion: { result in
+                    switch result {
+                    case .success(let authResults):
+                        handleAuthorization(authResults)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                             isProceed.toggle()
-                        case .failure(let error):
-                            print("Authorization failed: \(error.localizedDescription)")
                         }
+                    case .failure(let error):
+                        print("Authorization failed: \(error.localizedDescription)")
                     }
-                )
-                .shadow(color: colorScheme == .dark ? Color.white.opacity(0.5) : Color.gray, radius: 3, x: 0, y: 2)
-                .signInWithAppleButtonStyle(
-                    colorScheme == .dark ? .white : .black
-                )
-                .loading(isLoading: $isLoading)
-                .popup(isShowing: $showErrorPopup, message: errorMessage)
-                .fullScreenCover(isPresented: $isProceed) {
-                    MyOwnNumberView(viewModel: ContactListViewModel(),
-                                    selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
-                                    phoneNumber: "")
                 }
-                .frame(height: 45)
-                .padding()
+            )
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.5) : Color.gray, radius: 3, x: 0, y: 2)
+            .signInWithAppleButtonStyle(
+                colorScheme == .dark ? .white : .black
+            )
+            .loading(isLoading: $isLoading)
+            .popup(isShowing: $showErrorPopup, message: errorMessage)
+            .fullScreenCover(isPresented: $isProceed) {
+                MyOwnNumberView(viewModel: ContactListViewModel(),
+                                myOwnNumberVM: MyOwnNumderViewModel(), selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
+                                phoneNumber: "")
+            }
+            .frame(height: 45)
+            .padding()
         }
     }
     
@@ -71,7 +73,7 @@ struct SignInView: View {
             return
         }
         
-       
+        
         guard let requestBody = appleIdUser.data(using: .utf8) else {
             showErrorPopup = true
             errorMessage = "Can't convert Apple ID to Data."
@@ -92,11 +94,11 @@ struct SignInView: View {
             responseType: AuthResponse.self
         ) { result in
             DispatchQueue.main.async {
-                self.isLoading = false  // Выключаем лоадер
+                self.isLoading = false
                 switch result {
                 case .success(let response):
                     UserDefaultsManager.shared.saveRefreshToken(response.refreshToken)
-                    // Переход на другой экран или обновление UI
+                    print(UserDefaultsManager.shared.getRefreshToken() ?? "No token")
                     showErrorPopup = true
                     errorMessage = "ПОЛУЧИЛОСЬ"
                 case .failure(let error):
@@ -129,7 +131,7 @@ struct SecureTextAnimationView: View {
     private func startAnimation() {
         isAnimating = true
         var currentIndex = 0
-        displayText = "" 
+        displayText = ""
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { _ in
             if currentIndex < secureText.count {

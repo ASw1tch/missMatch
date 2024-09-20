@@ -44,6 +44,7 @@ struct PopupViewModifier: ViewModifier {
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .animation(.easeInOut(duration: 0.6), value: isShowing)
             }
+            Spacer()
         }
     }
 }
