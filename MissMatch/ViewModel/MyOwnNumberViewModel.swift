@@ -31,7 +31,7 @@ class MyOwnNumderViewModel: ObservableObject {
             for contact in contacts {
                 for phoneNumber in contact.phoneNumbers {
                     let number = phoneNumber.value.stringValue
-                    let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
+                    _ = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
                     phoneNumbers.append(number)
                 }
             }

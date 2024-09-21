@@ -13,38 +13,43 @@ struct PopupViewModifier: ViewModifier {
     var isError: Bool
     
     func body(content: Content) -> some View {
-        ZStack(alignment: .top) {
+        ZStack {
             content
             if isShowing {
-                VStack {
-                    Text(message)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            VisualEffectBlur(blurStyle: .systemMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        )
-                        .foregroundColor(.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(isError ? Color.red : Color.green, lineWidth: 2)
-                        )
-                        .padding(.horizontal, 10)
-                        .onTapGesture {
-                            isShowing = false
-                        }
-                        .gesture(
-                            DragGesture().onEnded { value in
-                                if value.translation.height < 0 {
-                                    isShowing = false
-                                }
+                GeometryReader { geometry in
+                    VStack {
+                        Spacer()
+                        Text(message)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                VisualEffectBlur(blurStyle: .systemMaterial)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            )
+                            .foregroundColor(.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(isError ? Color.red : Color.green, lineWidth: 2)
+                            )
+                            .padding(.horizontal, 10)
+                            .onTapGesture {
+                                isShowing = false
                             }
-                        )
+                            .gesture(
+                                DragGesture().onEnded { value in
+                                    if value.translation.height < 0 {
+                                        isShowing = false
+                                    }
+                                }
+                            )
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .animation(.easeInOut(duration: 0.6), value: isShowing)
+                            .frame(width: geometry.size.width)
+                            .position(x: geometry.size.width / 2, y: 80)
+                    }
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.6), value: isShowing)
+                .edgesIgnoringSafeArea(.all)
             }
-            Spacer()
         }
     }
 }

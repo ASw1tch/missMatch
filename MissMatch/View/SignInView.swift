@@ -12,11 +12,12 @@ import CryptoKit
 
 struct SignInView: View {
     @Environment(\.colorScheme) var colorScheme
+    
+    @ObservedObject var signInVM: SignInViewModel
+    
     @State private var currentNonce: String?
     @State private var isProceed = false
-    @State private var isLoading = false
-    @State private var showErrorPopup = false
-    @State private var errorMessage = ""
+    
     
     var body: some View {
         VStack {
@@ -42,8 +43,6 @@ struct SignInView: View {
             .signInWithAppleButtonStyle(
                 colorScheme == .dark ? .white : .black
             )
-            .loading(isLoading: $isLoading)
-            .popup(isShowing: $showErrorPopup, message: errorMessage)
             .fullScreenCover(isPresented: $isProceed) {
                 MyOwnNumberView(viewModel: ContactListViewModel(),
                                 myOwnNumberVM: MyOwnNumderViewModel(), selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
@@ -51,7 +50,9 @@ struct SignInView: View {
             }
             .frame(height: 45)
             .padding()
-        }
+            
+        }.loading(isLoading: $signInVM.isLoading)
+            .popup(isShowing: $signInVM.showErrorPopup, message: signInVM.errorMessage)
     }
     
     private func handleAuthorization(_ authResults: ASAuthorization) {
@@ -62,50 +63,7 @@ struct SignInView: View {
             
             UserDefaultsManager.shared.saveAppleId(userId)
             
-            sendToServer(authorizationCode: authorizationCodeString)
-        }
-    }
-    
-    private func sendToServer(authorizationCode: String) {
-        guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
-            showErrorPopup = true
-            errorMessage = "Apple ID is not found."
-            return
-        }
-        
-        
-        guard let requestBody = appleIdUser.data(using: .utf8) else {
-            showErrorPopup = true
-            errorMessage = "Can't convert Apple ID to Data."
-            return
-        }
-        
-        isLoading = true
-        let headers: [HTTPHeaderField: String] = [
-            .authorization: authorizationCode,
-            .contentType: HTTPHeaderValue.json.rawValue
-        ]
-        
-        NetworkManager.shared.sendRequest(
-            to: K.API.authCodeApiUrl,
-            method: .POST,
-            headers: headers,
-            body: requestBody,
-            responseType: AuthResponse.self
-        ) { result in
-            DispatchQueue.main.async {
-                self.isLoading = false
-                switch result {
-                case .success(let response):
-                    UserDefaultsManager.shared.saveRefreshToken(response.refreshToken)
-                    print(UserDefaultsManager.shared.getRefreshToken() ?? "No token")
-                    showErrorPopup = true
-                    errorMessage = "ПОЛУЧИЛОСЬ"
-                case .failure(let error):
-                    self.showErrorPopup = true
-                    self.errorMessage = "Error: \(error.localizedDescription)"
-                }
-            }
+            signInVM.sendToServer(authorizationCode: authorizationCodeString)
         }
     }
 }
@@ -153,6 +111,6 @@ struct SecureTextAnimationView: View {
 }
 
 #Preview {
-    SignInView()
+    SignInView(signInVM: SignInViewModel())
 }
 

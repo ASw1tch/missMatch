@@ -66,8 +66,7 @@ struct MyOwnNumberView: View {
                     .cornerRadius(8)
                     .shadow(color: colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray, radius: 3, x: 0, y: 2)
                 
-            }.loading(isLoading: $myOwnNumberVM.isLoading)
-             .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
+            }
                 .padding()
                 .disabled(phoneNumber.isEmpty)
         }
@@ -75,6 +74,8 @@ struct MyOwnNumberView: View {
             hideKeyboard()
         }
         .padding()
+        .loading(isLoading: $myOwnNumberVM.isLoading)
+        .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
         .fullScreenCover(isPresented: $myOwnNumberVM.shouldNavigate) {
             ContactListView(viewModel: viewModel)
         }
