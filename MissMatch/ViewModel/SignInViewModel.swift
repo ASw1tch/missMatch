@@ -39,7 +39,7 @@ class SignInViewModel: ObservableObject {
         ]
         
         NetworkManager.shared.sendRequest(
-            to: K.API.authCodeApiUrl,
+            to: API.authCodeApiUrl,
             method: .POST,
             headers: headers,
             body: requestBody,

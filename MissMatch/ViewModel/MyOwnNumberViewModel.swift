@@ -87,7 +87,7 @@ class MyOwnNumderViewModel: ObservableObject {
         ]
         print(headers)
         NetworkManager.shared.sendRequest(
-            to: K.API.userApiUrl,
+            to: API.userApiUrl,
             method: .POST,
             headers: headers,
             body: requestBody,

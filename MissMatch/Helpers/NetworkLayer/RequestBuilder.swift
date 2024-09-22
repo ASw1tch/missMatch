@@ -31,6 +31,15 @@ struct RequestBuilder {
         request.allHTTPHeaderFields = updatedHeaders.mapKeys { $0.rawValue }
         request.httpBody = body
         
+        print("Request URL: \(urlString)")
+        print("HTTP Method: \(method.rawValue)")
+        print("Headers: \(updatedHeaders)")
+        if let body = body {
+            print("Request Body: \(String(data: body, encoding: .utf8) ?? "Unable to encode body to string")")
+        } else {
+            print("Request Body: None")
+        }
+        
         return request
     }
 }

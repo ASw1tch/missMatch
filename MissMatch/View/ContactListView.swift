@@ -22,31 +22,23 @@ struct ContactListView: View {
                         .font(.largeTitle)
                         .bold()
                         .padding()
-                        .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                            content
-                                .opacity(phase.isIdentity ? 1 : 0)
-                                .scaleEffect(phase.isIdentity ? 1 : 0.75)
-                                .blur(radius: phase.isIdentity ? 0 : 10)
-                        }
+                    
                     ForEach(viewModel.contacts
                         .filter { contact in
-                            !contact.name.isEmpty ||
-                            !contact.surname.isEmpty
+                            !contact.givenName.isEmpty || !contact.familyName.isEmpty
                         }
-                        .sorted { $0.name < $1.name }) { contact in
+                        .sorted { $0.givenName < $1.givenName }) { contact in
                             ContactRowView(viewModel: viewModel, contact: contact)
-                        }.scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                            content
-                                .opacity(phase.isIdentity ? 1 : 0)
-                                .scaleEffect(phase.isIdentity ? 1 : 0.75)
-                                .blur(radius: phase.isIdentity ? 0 : 10)
                         }
                 }
                 .padding()
             }
             .scrollIndicators(.never)
-        }.onAppear {
-            viewModel.getAllContacts()
+        }
+        .onAppear {
+            viewModel.fetchContacts { contactList in
+                viewModel.sendContactsToServer(contactList: contactList)
+            }
         }
     }
 }

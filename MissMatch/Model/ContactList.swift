@@ -6,29 +6,44 @@
 //
 
 import Foundation
-import CryptoKit
 
-struct ContactList: Identifiable, Equatable {
-    var id: Int
-    var name: String
-    var surname: String
-    var phoneNumber: [String]
-    var hashedPhoneNumbers: [String] {
-        return phoneNumber.map { PhoneNumberManager.hashPhoneNumber($0) }
+struct ContactList: Codable {
+    let userID: String
+    let toAdd, toUpdate: [To]
+    let toRemove: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case userID = "userId"
+        case toAdd, toUpdate, toRemove
     }
+}
+
+struct To: Codable {
+    let contactID: String
+    let phones: [String]
     
-    var iLiked: Bool = false
-    var itsMatch: Bool = false
-    
+    enum CodingKeys: String, CodingKey {
+        case contactID = "contactId"
+        case phones
+    }
 }
 
 struct ContactsResponse: Decodable {
     let isSuccessful: Bool
     let message: String
-    let contacts: [Contacts]
+    let contacts: [Contact]
 }
 
-struct Contacts: Decodable {
-    let id: Int
-    let phones: [String]
+struct Contact: Identifiable, Decodable {
+    let identifier: String
+    let givenName: String
+    let familyName: String
+    let phoneNumbers: [String]
+    
+    var iLiked: Bool = false
+    var itsMatch: Bool = false
+    
+    var id: String {
+        return identifier
+    }
 }

@@ -29,7 +29,7 @@ struct ContactRowView: View {
     
     private let likesRepository = LikesRepository()
     
-    var contact: ContactList
+    var contact: Contact
     
     var heartState: HeartState {
         if contact.itsMatch {
@@ -44,8 +44,8 @@ struct ContactRowView: View {
     var body: some View {
         ZStack {
             HStack {
-                Text(contact.name).bold()
-                Text(contact.surname)
+                Text(contact.givenName).bold()
+                Text(contact.familyName)
                 Spacer()
                 
                 Button(action: handleButtonAction) {
@@ -98,51 +98,52 @@ struct ContactRowView: View {
     }
     
     private func handleButtonAction() {
-        guard !contact.iLiked else {
-            viewModel.toggleMiss(contact: contact)
-            return
-        }
-        guard likesRepository.canLike() else {
-            showAlert = true
-            return
-        }
-        viewModel.toggleMiss(contact: contact)
-        if viewModel.matched {
-            viewModel.matched.toggle()
-            showMatchView = true
-        }
+        print(contact.id)
+        //        guard !contact.iLiked else {
+        //            viewModel.toggleMiss(contact: contact)
+        //            return
+        //        }
+        //        guard likesRepository.canLike() else {
+        //            showAlert = true
+        //            return
+        //        }
+        //        viewModel.toggleMiss(contact: contact)
+        //        if viewModel.matched {
+        //            viewModel.matched.toggle()
+        //            showMatchView = true
+        //        }
+        //    }
     }
-}
-
-@ViewBuilder
-func hearts() -> some View {
-    Image(systemName: "heart.fill")
-        .resizable()
-        .foregroundStyle(Color(hex: "FFC7ED"))
-        .frame(width: 60, height: 60)
-        .position(x: 190, y: 35)
-        .rotationEffect(.degrees(-15))
-        .blur(radius: 1.5)
     
-    Image(systemName: "heart")
-        .resizable()
-        .foregroundStyle(Color(hex: "7D8ABC"))
-        .frame(width: 30, height: 30)
-        .position(x: 210, y: 30)
-        .rotationEffect(.degrees(20))
-        .shadow(radius: 10)
-}
-struct ContactRowView_Previews: PreviewProvider {
-    static var previews: some View {
-        let sampleContact = ContactList(id: 22, name: "Mary", surname: "Smith", phoneNumber: ["+79332231312"])
-        let viewModel = ContactListViewModel()
-        viewModel.contacts = [sampleContact]
+    @ViewBuilder
+    func hearts() -> some View {
+        Image(systemName: "heart.fill")
+            .resizable()
+            .foregroundStyle(Color(hex: "FFC7ED"))
+            .frame(width: 60, height: 60)
+            .position(x: 190, y: 35)
+            .rotationEffect(.degrees(-15))
+            .blur(radius: 1.5)
         
-        return ContactRowView(viewModel: viewModel, contact: sampleContact)
-            .previewLayout(.sizeThatFits)
-            .padding()
+        Image(systemName: "heart")
+            .resizable()
+            .foregroundStyle(Color(hex: "7D8ABC"))
+            .frame(width: 30, height: 30)
+            .position(x: 210, y: 30)
+            .rotationEffect(.degrees(20))
+            .shadow(radius: 10)
+    }
+    struct ContactRowView_Previews: PreviewProvider {
+        static var previews: some View {
+            let sampleContact = Contact(identifier: "22", givenName: "Mary", familyName: "Smith", phoneNumbers: ["+79332231312"])
+            let viewModel = ContactListViewModel()
+            viewModel.contacts = [sampleContact]
+            
+            return ContactRowView(viewModel: viewModel, contact: sampleContact)
+                .previewLayout(.sizeThatFits)
+                .padding()
+        }
     }
 }
-
 
 
