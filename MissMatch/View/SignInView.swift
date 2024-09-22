@@ -12,67 +12,59 @@ import CryptoKit
 
 struct SignInView: View {
     @Environment(\.colorScheme) var colorScheme
+    
+    @ObservedObject var signInVM: SignInViewModel
+    
     @State private var currentNonce: String?
     @State private var isProceed = false
     
+    
     var body: some View {
-            VStack {
-                SecureTextAnimationView()
-                SignInWithAppleButton(
-                    .signIn,
-                    onRequest: { request in
-                        request.requestedScopes = [.fullName, .email]
-                    },
-                    onCompletion: { result in
-                        switch result {
-                        case .success(let authResults):
-                            handleAuthorization(authResults)
+        VStack {
+            SecureTextAnimationView()
+            SignInWithAppleButton(
+                .signIn,
+                onRequest: { request in
+                    request.requestedScopes = [.fullName, .email]
+                },
+                onCompletion: { result in
+                    switch result {
+                    case .success(let authResults):
+                        handleAuthorization(authResults)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                             isProceed.toggle()
-                        case .failure(let error):
-                            print("Authorization failed: \(error.localizedDescription)")
                         }
+                    case .failure(let error):
+                        print("Authorization failed: \(error.localizedDescription)")
                     }
-                )
-                .shadow(color: colorScheme == .dark ? Color.white.opacity(0.5) : Color.gray, radius: 3, x: 0, y: 2)
-                .signInWithAppleButtonStyle(
-                    colorScheme == .dark ? .white : .black
-                )
-                .fullScreenCover(isPresented: $isProceed) {
-                    MyOwnNumberView(viewModel: ContactListViewModel(),
-                                    selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
-                                    phoneNumber: "")
                 }
-                .frame(height: 45)
-                .padding()
-        
-        }
+            )
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.5) : Color.gray, radius: 3, x: 0, y: 2)
+            .signInWithAppleButtonStyle(
+                colorScheme == .dark ? .white : .black
+            )
+            .fullScreenCover(isPresented: $isProceed) {
+                MyOwnNumberView(viewModel: ContactListViewModel(),
+                                myOwnNumberVM: MyOwnNumderViewModel(), selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
+                                phoneNumber: "")
+            }
+            .frame(height: 45)
+            .padding()
+            
+        }.loading(isLoading: $signInVM.isLoading)
+            .popup(isShowing: $signInVM.showErrorPopup, message: signInVM.errorMessage)
     }
     
     private func handleAuthorization(_ authResults: ASAuthorization) {
         if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
             let userId = appleIDCredential.user
-            let identityToken = appleIDCredential.identityToken
             let authorizationCode = appleIDCredential.authorizationCode
-            
-            
             let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
             
-            
-            print("appleIDCredential.authorizationCode: \(authorizationCodeString)")
-            
-            
-            // Сохраните userId, если нужно
             UserDefaultsManager.shared.saveAppleId(userId)
             
-            // Теперь отправьте identityTokenString на ваш сервер
-            sendToServer(authorizationCode: authorizationCodeString)
+            signInVM.sendToServer(authorizationCode: authorizationCodeString)
         }
-    }
-    
-    private func sendToServer(authorizationCode: String) {
-        // Create an instance of the enum with the authorization code
-        let postDataCase = PostDataCase.authorizationCode(authorizationCode)
-        NetworkManager.shared.postData(for: postDataCase)
     }
 }
 
@@ -97,7 +89,7 @@ struct SecureTextAnimationView: View {
     private func startAnimation() {
         isAnimating = true
         var currentIndex = 0
-        displayText = "" 
+        displayText = ""
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { _ in
             if currentIndex < secureText.count {
@@ -119,6 +111,6 @@ struct SecureTextAnimationView: View {
 }
 
 #Preview {
-    SignInView()
+    SignInView(signInVM: SignInViewModel())
 }
 

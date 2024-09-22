@@ -9,10 +9,12 @@ import SwiftUI
 
 struct MyOwnNumberView: View {
     @Environment(\.colorScheme) var colorScheme
+    
     @ObservedObject var viewModel: ContactListViewModel
+    @ObservedObject var myOwnNumberVM: MyOwnNumderViewModel
+    
     @State var selectedCountry: Country
     @State var phoneNumber: String
-    @State private var isPresentedList = false
     
     let countryCodes = countryCodesInstance.sortedCountryCodes()
     
@@ -51,12 +53,11 @@ struct MyOwnNumberView: View {
             .foregroundColor(Color.primary)
             
             Button(action: {
-                viewModel.handleContinueAction(
+                myOwnNumberVM.handleContinueAction(
                     selectedCountryCode: selectedCountry.code,
                     phoneNumber: phoneNumber
                 )
                 hideKeyboard()
-                isPresentedList = true
             }) {
                 Text("Continue")
                     .padding()
@@ -66,21 +67,23 @@ struct MyOwnNumberView: View {
                     .shadow(color: colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray, radius: 3, x: 0, y: 2)
                 
             }
-            .padding()
-            .disabled(phoneNumber.isEmpty)
+                .padding()
+                .disabled(phoneNumber.isEmpty)
         }
         .onTapGesture {
             hideKeyboard()
         }
         .padding()
-        .fullScreenCover(isPresented: $isPresentedList) {
+        .loading(isLoading: $myOwnNumberVM.isLoading)
+        .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
+        .fullScreenCover(isPresented: $myOwnNumberVM.shouldNavigate) {
             ContactListView(viewModel: viewModel)
         }
     }
 }
 
 #Preview {
-    MyOwnNumberView(viewModel: ContactListViewModel(), selectedCountry: Country(flag: "🇹🇻", code: "+688", name: "Tuvalu"), phoneNumber: "89923123312")
+    MyOwnNumberView(viewModel: ContactListViewModel(), myOwnNumberVM: MyOwnNumderViewModel(), selectedCountry: Country(flag: "🇹🇻", code: "+688", name: "Tuvalu"), phoneNumber: "89923123312")
 }
 
 extension View {

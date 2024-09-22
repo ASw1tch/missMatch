@@ -2,6 +2,7 @@ import Foundation
 import Contacts
 import CoreTelephony
 
+
 class ContactListViewModel: ObservableObject {
     
     @Published var contacts: [ContactList] = []
@@ -15,30 +16,7 @@ class ContactListViewModel: ObservableObject {
         self.fetchAllContacts()
     }
     
-    func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
         
-        let store = CNContactStore()
-        let predicate = CNContact.predicateForContacts(matching: CNPhoneNumber(stringValue: phoneNumber))
-        let keysToFetch = [CNContactPhoneNumbersKey as CNKeyDescriptor]
-        
-        do {
-            let contacts = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
-            var phoneNumbers: [String] = []
-            
-            for contact in contacts {
-                for phoneNumber in contact.phoneNumbers {
-                    let number = phoneNumber.value.stringValue
-                    let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
-                    phoneNumbers.append(number)
-                }
-            }
-            completion(phoneNumbers)
-        } catch {
-            print("Failed to fetch contact, error: \(error)")
-            completion([])
-        }
-    }
-    
     func fetchAllContacts() {
         DispatchQueue.global(qos: .userInitiated).async {
             let store = CNContactStore()
@@ -56,6 +34,7 @@ class ContactListViewModel: ObservableObject {
                 do {
                     var fetchedContacts: [ContactList] = []
                     var savedContactIDs = UserDefaults.standard.dictionary(forKey: "savedContactIDs") as? [String: Int] ?? [:]
+                    var savedContacts: [SavedContact] = [] // Массив для сохраненных контактов
                     
                     try store.enumerateContacts(with: fetchRequest) { contact, _ in
                         let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
@@ -78,11 +57,18 @@ class ContactListViewModel: ObservableObject {
                             phoneNumber: normalizedPhoneNumbers
                         )
                         fetchedContacts.append(contact)
+                        
+                        // Создаем объект SavedContact для каждого контакта
+                        let savedContact = SavedContact(id: contactID, phones: normalizedPhoneNumbers)
+                        savedContacts.append(savedContact)
                     }
                     
                     DispatchQueue.main.async {
                         self.contacts = fetchedContacts
                         self.loadLikes()
+                        
+                        // Отправляем контакты на сервер
+                        self.sendContactsToServer(savedContacts: savedContacts)
                     }
                     
                 } catch {
@@ -90,6 +76,20 @@ class ContactListViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    func sendContactsToServer(savedContacts: [SavedContact]) {
+        // Получаем userId, который нужно передать в запросе
+        guard let userId = UserDefaultsManager.shared.getAppleId() else {
+            print("User ID not found")
+            return
+        }
+        
+        // Создаем объект SaveContactRequest
+        let saveContactRequest = SaveContactRequest(userId: userId, contacts: savedContacts)
+        
+        // Отправляем данные через NetworkManager
+        
     }
     
     func getAllContacts() {
@@ -118,29 +118,7 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
-    func handleContinueAction(selectedCountryCode: String?, phoneNumber: String) {
-        
-        guard let selectedCountryCode = selectedCountryCode else {
-            print("Country code is missing")
-            return
-        }
-        
-        var myNumbers = [String]()
-        let myInputNumber = selectedCountryCode + phoneNumber
-        myNumbers.append(myInputNumber)
-        
-        findContactPhoneNumbers(for: myInputNumber) { phoneNumbers in
-            if phoneNumbers.isEmpty {
-                myNumbers.append(myInputNumber)
-            } else {
-                myNumbers.append(contentsOf: phoneNumbers)
-            }
-            print("All phone numbers for the contact:", myNumbers)
-            let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
-            //let user = User(refreshToken: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
-           // NetworkManager.shared.postData(for: .user(user))
-        }
-    }
+    
     
     func toggleMiss(contact: ContactList) {
         guard let userId = UserDefaultsManager.shared.getUserId() else {
@@ -162,8 +140,8 @@ class ContactListViewModel: ObservableObject {
             loadLikes()
             
             let contactIds = contacts.filter { $0.iLiked }.map { $0.id }
-            let likeRequest = LikeRequest(fromUserId: userId, contactIds: contactIds)
-            NetworkManager.shared.postData(for: .likes(likeRequest))
+            //let likeRequest = LikeRequest(fromUserId: userId, contactIds: contactIds)
+            //NetworkManager.shared.postData(for: .likes(likeRequest))
         }
     }
     
