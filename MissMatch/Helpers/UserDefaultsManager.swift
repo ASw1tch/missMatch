@@ -33,29 +33,30 @@ class UserDefaultsManager {
         return UserDefaults.standard.string(forKey: appleIdKey)
     }
     
-    // Сохранение контактов
     func saveContactPhones(for identifier: String, phoneNumbers: [String]) {
         var savedContacts = UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]] ?? [:]
         savedContacts[identifier] = phoneNumbers
         UserDefaults.standard.set(savedContacts, forKey: contactsKey)
     }
     
-    // Получение телефонов для конкретного контакта
     func getContactPhones(for identifier: String) -> [String]? {
         let savedContacts = UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]]
         return savedContacts?[identifier]
     }
     
-    // Получение всех контактов
-    func getAllContacts() -> [String: [String]] {
-        return UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]] ?? [:]
+    func removeContact(for identifier: String) {
+        var savedContacts = getAllContacts()
+        savedContacts.removeValue(forKey: identifier)
+        
+        saveAllContacts(savedContacts)
     }
     
-    // Удаление контакта
-    func removeContact(for identifier: String) {
-        var savedContacts = UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]] ?? [:]
-        savedContacts.removeValue(forKey: identifier)
-        UserDefaults.standard.set(savedContacts, forKey: contactsKey)
+    func saveAllContacts(_ contacts: [String: [String]]) {
+        UserDefaults.standard.set(contacts, forKey: "contacts")
+    }
+    
+    func getAllContacts() -> [String: [String]] {
+        return UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]] ?? [:]
     }
     
     func saveRefreshToken(_ appleId: String) {

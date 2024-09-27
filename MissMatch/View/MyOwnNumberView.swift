@@ -77,7 +77,7 @@ struct MyOwnNumberView: View {
         .padding()
         .loading(isLoading: $myOwnNumberVM.isLoading)
         .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
-        .fullScreenCover(isPresented: $shouldNavigateToContacts) {
+        .fullScreenCover(isPresented: $myOwnNumberVM.shouldNavigate) {
                     ContactListView(viewModel: viewModel)  // Переход на ContactListView
         }
     }

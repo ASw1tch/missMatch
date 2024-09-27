@@ -98,21 +98,31 @@ class ContactListViewModel: ObservableObject {
                 self.isLoading = false
                 switch result {
                 case .success(let response):
+                    print("Response: \(response)")
                     if response.isSuccessful {
                         self.errorMessage = response.message
                         print("Successfully received contacts: \(response.contacts)")
-                        
+            
                         for contact in response.contacts {
-                            UserDefaultsManager.shared.saveContactPhones(for: contact.identifier, phoneNumbers: contact.phoneNumbers)
+                            UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones) //UserDef
+                            
                         }
+                        // Получаем локальные контакты для сопоставления
+                        let localContacts = self.contacts
+                        
+                        // Преобразуем данные с сервера и обновляем UI
+                        let mappedContacts = self.mapDTOToContact(contactDTOs: response.contacts, localContacts: localContacts)
+                        self.contacts = mappedContacts // Обновляем UI
                         
                     } else {
                         self.showErrorPopup = true
                         self.errorMessage = "Server responded with an error: \(response.message)"
+                        print("Server error: \(response.message)")
                     }
                 case .failure(let error):
                     self.showErrorPopup = true
                     self.errorMessage = "Error: \(error.localizedDescription)"
+                    print("Request failed: \(error)")
                 }
             }
         }
@@ -139,6 +149,8 @@ class ContactListViewModel: ObservableObject {
         
         for savedContactID in savedContacts.keys {
             if !contacts.contains(where: { $0.identifier == savedContactID }) {
+                UserDefaultsManager.shared.removeContact(for: savedContactID)
+                
                 toRemove.append(savedContactID)
             }
         }
@@ -149,6 +161,32 @@ class ContactListViewModel: ObservableObject {
             toUpdate: toUpdate,
             toRemove: toRemove
         )
+    }
+    
+    func mapDTOToContact(contactDTOs: [ContactDTO], localContacts: [Contact]) -> [Contact] {
+        return contactDTOs.compactMap { dto in
+            if let matchingLocalContact = localContacts.first(where: { $0.identifier == dto.contactId }) {
+                // Если найден локальный контакт по идентификатору, используем его имена
+                return Contact(
+                    identifier: dto.contactId,
+                    givenName: matchingLocalContact.givenName,
+                    familyName: matchingLocalContact.familyName,
+                    phoneNumbers: dto.phones,
+                    iLiked: dto.iLiked,
+                    itsMatch: dto.itsMatch
+                )
+            } else {
+                // Если не найден локальный контакт, просто возвращаем данные с сервера
+                return Contact(
+                    identifier: dto.contactId,
+                    givenName: nil, // Сервер не прислал имени
+                    familyName: nil, // Сервер не прислал фамилии
+                    phoneNumbers: dto.phones,
+                    iLiked: dto.iLiked,
+                    itsMatch: dto.itsMatch
+                )
+            }
+        }
     }
 
     func toggleMiss(contact: Contact) {

@@ -31,13 +31,13 @@ struct To: Codable {
 struct ContactsResponse: Decodable {
     let isSuccessful: Bool
     let message: String
-    let contacts: [Contact]
+    let contacts: [ContactDTO]
 }
 
 struct Contact: Identifiable, Decodable {
     let identifier: String
-    let givenName: String
-    let familyName: String
+    var givenName: String? = nil
+    var familyName: String? = nil
     let phoneNumbers: [String]
     
     var iLiked: Bool = false
@@ -45,5 +45,22 @@ struct Contact: Identifiable, Decodable {
     
     var id: String {
         return identifier
+    }
+}
+
+struct ContactDTO: Identifiable, Decodable {
+    let contactId: String
+    let phones: [String]
+    
+    var iLiked: Bool = false
+    var itsMatch: Bool = false
+    
+    var id: String {
+        return contactId
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case contactId = "contactId"
+        case phones = "phones"
     }
 }

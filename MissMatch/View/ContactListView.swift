@@ -13,38 +13,71 @@ struct ContactListView: View {
     @State private var selectedContact: ContactList? = nil
     @State var showMatchView = false
     @State var testId = ""
+    @State private var isLoading = false
+    @State private var showErrorPopup = false
+    @State private var errorMessage = ""
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("I miss...")
-                        .font(.largeTitle)
-                        .bold()
+            VStack {
+                if viewModel.isLoading {
+                    VStack {
+                        ProgressView("Loading contacts...")
+                            .padding()
+                    }
+                } else if viewModel.showErrorPopup {
+                    VStack {
+                        Text("Error: \(errorMessage)")
+                            .foregroundColor(.red)
+                        Button(action: {
+                            reloadContacts()
+                        }) {
+                            Text("Retry")
+                        }
                         .padding()
-                    
-                    ForEach(viewModel.contacts
-                        .filter { contact in
-                            !contact.givenName.isEmpty || !contact.familyName.isEmpty
+                    }
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("I miss...")
+                                .font(.largeTitle)
+                                .bold()
+                                .padding()
+                            
+                            ForEach(viewModel.contacts
+                                .sorted { $0.givenName! < $1.givenName! }) { contact in
+                                    ContactRowView(viewModel: viewModel, contact: contact)
+                                }.scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1 : 0)
+                                        .scaleEffect(phase.isIdentity ? 1 : 0.75)
+                                        .blur(radius: phase.isIdentity ? 0 : 10)
+                                }
                         }
-                        .sorted { $0.givenName < $1.givenName }) { contact in
-                            ContactRowView(viewModel: viewModel, contact: contact)
-                        }
+                        .padding()
+                        
+                    }
+                    .scrollIndicators(.never)
                 }
-                .padding()
             }
-            .scrollIndicators(.never)
         }
         .onAppear {
-            viewModel.fetchContacts { contactList in
-                viewModel.sendContactsToServer(contactList: contactList)
-            }
+            reloadContacts()
         }
+    }
+    
+    func reloadContacts() {
+        viewModel.isLoading = true
+        showErrorPopup = false
+        errorMessage = ""
+        
+        viewModel.fetchContacts { contactList in
+            viewModel.sendContactsToServer(contactList: contactList) 
+        } 
+        viewModel.isLoading.toggle()
     }
 }
 
 #Preview {
     ContactListView()
 }
-
-

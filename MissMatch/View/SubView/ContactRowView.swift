@@ -44,8 +44,8 @@ struct ContactRowView: View {
     var body: some View {
         ZStack {
             HStack {
-                Text(contact.givenName).bold()
-                Text(contact.familyName)
+                Text(contact.givenName ?? "Undefined name").bold()
+                Text(contact.familyName ?? "Undefined surname")
                 Spacer()
                 
                 Button(action: handleButtonAction) {
