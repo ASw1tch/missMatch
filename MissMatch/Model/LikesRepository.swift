@@ -8,26 +8,11 @@
 import Foundation
 
 class LikesRepository {
-    
-    private let userDefaultsKey = "savedLikes"
-    private let maxFreeHearts = 3
-    
-    func saveLike(contactID: Int) {
-        var savedLikes = UserDefaults.standard.array(forKey: userDefaultsKey) as? [Int] ?? []
-        savedLikes.append(contactID)
-        UserDefaults.standard.set(savedLikes, forKey: userDefaultsKey)
-    }
-    
-    func removeLike(contactID: Int) {
-        var savedLikes = UserDefaults.standard.array(forKey: userDefaultsKey) as? [Int] ?? []
-        if let index = savedLikes.firstIndex(of: contactID) {
-            savedLikes.remove(at: index)
-            UserDefaults.standard.set(savedLikes, forKey: userDefaultsKey)
-        }
-    }
-    
-    func loadLikes() -> [Int] {
-        return UserDefaults.standard.array(forKey: userDefaultsKey) as? [Int] ?? []
+
+    private let maxFreeHearts = 10
+        
+    func loadLikes() -> [String] {
+        return UserDefaultsManager.shared.getLikes()
     }
     
     func heartCount() -> Int {

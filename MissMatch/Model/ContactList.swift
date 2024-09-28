@@ -46,6 +46,14 @@ struct Contact: Identifiable, Decodable {
     var id: String {
         return identifier
     }
+    
+    mutating func toggleLike() {
+        iLiked.toggle()
+    }
+    
+    mutating func toggleMatch() {
+        itsMatch.toggle()
+    }
 }
 
 struct ContactDTO: Identifiable, Decodable {

@@ -45,14 +45,14 @@ struct ContactPermissonView: View {
                             .position(x: geometry.size.width / 2.2 , y: geometry.size.height / 4)
                             .bold()
                             .padding()
-                        VStack(alignment: .center) {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.red, lineWidth: 5)
-                                .background(Color(UIColor.systemBackground))
-                                .frame(width: 320, height: 230)
-                                .cornerRadius(10)
-                                .position(x: geometry.size.width / 2, y: geometry.size.height / 2 + geometry.size.height * 0.011)
-                        }
+//                        VStack(alignment: .center) {
+//                            RoundedRectangle(cornerRadius: 10)
+//                                .stroke(Color.red, lineWidth: 5)
+//                                .background(Color(UIColor.systemBackground))
+//                                .frame(width: 320, height: 230)
+//                                .cornerRadius(10)
+//                                .position(x: geometry.size.width / 2, y: geometry.size.height / 2 + geometry.size.height * 0.011)
+//                        }
                     }
                 }
                 .fullScreenCover(isPresented: $showNextView) {

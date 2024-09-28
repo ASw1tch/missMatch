@@ -72,8 +72,9 @@ struct ContactListView: View {
         errorMessage = ""
         
         viewModel.fetchContacts { contactList in
-            viewModel.sendContactsToServer(contactList: contactList) 
-        } 
+            viewModel.sendContactsToServer(contactList: contactList)
+        }
+        
         viewModel.isLoading.toggle()
     }
 }

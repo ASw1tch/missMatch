@@ -50,10 +50,10 @@ class ContactListViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self.contacts = contacts
                         self.isLoading = false
+                        self.loadLikes()
                         
-                        // Создание ContactList для отправки
                         let contactList = self.sortContactsForServer(userID: UserDefaultsManager.shared.getAppleId() ?? "No Apple Id", contacts: contacts)
-                        completion(contactList) // Передача готового списка в completion
+                        completion(contactList)
                     }
                     
                 } catch {
@@ -132,6 +132,10 @@ class ContactListViewModel: ObservableObject {
         var toUpdate = [To]()
         var toRemove = [String]()
         
+        toUpdate.removeAll()
+        toAdd.removeAll()
+        toRemove.removeAll()
+        
         let savedContacts = UserDefaultsManager.shared.getAllContacts()
         
         for contact in contacts {
@@ -178,8 +182,8 @@ class ContactListViewModel: ObservableObject {
                 // Если не найден локальный контакт, просто возвращаем данные с сервера
                 return Contact(
                     identifier: dto.contactId,
-                    givenName: nil, // Сервер не прислал имени
-                    familyName: nil, // Сервер не прислал фамилии
+                    givenName: nil,
+                    familyName: nil,
                     phoneNumbers: dto.phones,
                     iLiked: dto.iLiked,
                     itsMatch: dto.itsMatch
@@ -187,11 +191,14 @@ class ContactListViewModel: ObservableObject {
             }
         }
     }
-
-    func toggleMiss(contact: Contact) {
-    }
     
     func loadLikes() {
+        let likedContacts = UserDefaultsManager.shared.getLikes() // Получаем лайки из UserDefaults
         
+        // Обновляем статус каждого контакта
+        for index in contacts.indices {
+            contacts[index].iLiked = likedContacts.contains(contacts[index].identifier)
+            print("Contact \(contacts[index].identifier) iLiked set to: \(contacts[index].iLiked)")
+        }
     }
 }
