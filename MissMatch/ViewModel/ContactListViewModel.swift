@@ -98,13 +98,12 @@ class ContactListViewModel: ObservableObject {
                 self.isLoading = false
                 switch result {
                 case .success(let response):
-                    print("Response: \(response)")
                     if response.isSuccessful {
                         self.errorMessage = response.message
-                        print("Successfully received contacts: \(response.contacts)")
-            
+                        
+                        UserDefaultsManager.shared.removeAllContacts()
                         for contact in response.contacts {
-                            UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones) //UserDef
+                            UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones)
                             
                         }
                         // Получаем локальные контакты для сопоставления
@@ -147,11 +146,11 @@ class ContactListViewModel: ObservableObject {
             }
         }
         
+        // To Remove
         for savedContactID in savedContacts.keys {
             if !contacts.contains(where: { $0.identifier == savedContactID }) {
-                UserDefaultsManager.shared.removeContact(for: savedContactID)
-                
                 toRemove.append(savedContactID)
+                UserDefaultsManager.shared.removeContact(for: savedContactID)
             }
         }
         

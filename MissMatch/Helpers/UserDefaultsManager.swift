@@ -15,7 +15,7 @@ class UserDefaultsManager {
     private let contactsKey = "UserDefaultsManager.contactsKey"
     private let refreshTokenKey = "UserDefaultsManager.refreshTokenKey"
     
-    
+    // MARK: USER ID
     func saveUserId(_ id: Int) {
         UserDefaults.standard.set(id, forKey: userIdKey)
     }
@@ -25,6 +25,7 @@ class UserDefaultsManager {
         return id != 0 ? id : nil
     }
     
+    // MARK: APPLE ID
     func saveAppleId(_ appleId: String) {
         UserDefaults.standard.set(appleId, forKey: appleIdKey)
     }
@@ -33,32 +34,43 @@ class UserDefaultsManager {
         return UserDefaults.standard.string(forKey: appleIdKey)
     }
     
+    // MARK: CONTACTS
+    // Сохранение номеров телефонов контакта
     func saveContactPhones(for identifier: String, phoneNumbers: [String]) {
-        var savedContacts = UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]] ?? [:]
-        savedContacts[identifier] = phoneNumbers
-        UserDefaults.standard.set(savedContacts, forKey: contactsKey)
-    }
-    
-    func getContactPhones(for identifier: String) -> [String]? {
-        let savedContacts = UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]]
-        return savedContacts?[identifier]
-    }
-    
-    func removeContact(for identifier: String) {
         var savedContacts = getAllContacts()
-        savedContacts.removeValue(forKey: identifier)
-        
+        savedContacts[identifier] = phoneNumbers
         saveAllContacts(savedContacts)
     }
     
-    func saveAllContacts(_ contacts: [String: [String]]) {
-        UserDefaults.standard.set(contacts, forKey: "contacts")
+    // Получение номеров телефонов контакта
+    func getContactPhones(for identifier: String) -> [String]? {
+        return getAllContacts()[identifier]
     }
     
+    // Удаление контакта
+    func removeContact(for identifier: String) {
+        var savedContacts = getAllContacts()
+        savedContacts.removeValue(forKey: identifier)
+        saveAllContacts(savedContacts)
+    }
+    
+    // Удаление всех контактов
+    func removeAllContacts() {
+        UserDefaults.standard.removeObject(forKey: contactsKey)
+        UserDefaults.standard.synchronize()
+    }
+    
+    // Приватный метод для получения всех контактов
     func getAllContacts() -> [String: [String]] {
         return UserDefaults.standard.dictionary(forKey: contactsKey) as? [String: [String]] ?? [:]
     }
     
+    // Приватный метод для сохранения всех контактов
+    private func saveAllContacts(_ contacts: [String: [String]]) {
+        UserDefaults.standard.set(contacts, forKey: contactsKey)
+    }
+    
+    // MARK: REFRESH TOKEN
     func saveRefreshToken(_ appleId: String) {
         UserDefaults.standard.set(appleId, forKey: refreshTokenKey)
     }
