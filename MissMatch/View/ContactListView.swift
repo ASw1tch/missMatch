@@ -9,8 +9,7 @@ import SwiftUI
 
 struct ContactListView: View {
     
-    @StateObject var viewModel = ContactListViewModel()
-    @State private var selectedContact: ContactList? = nil
+    @ObservedObject var viewModel = ContactListViewModel()
     @State var showMatchView = false
     @State var testId = ""
     @State private var isLoading = false
@@ -44,18 +43,19 @@ struct ContactListView: View {
                                 .bold()
                                 .padding()
                             
-                            ForEach(viewModel.contacts
-                                .sorted { $0.givenName! < $1.givenName! }) { contact in
-                                    ContactRowView(viewModel: viewModel, contact: contact)
-                                }.scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                                    content
-                                        .opacity(phase.isIdentity ? 1 : 0)
-                                        .scaleEffect(phase.isIdentity ? 1 : 0.75)
-                                        .blur(radius: phase.isIdentity ? 0 : 10)
-                                }
+                            ForEach($viewModel.contacts.sorted(by: {
+                                ($0.givenName.wrappedValue ?? "") < ($1.givenName.wrappedValue ?? "")
+                            })) { $contact in
+                                ContactRowView(contact: $contact, viewModel: viewModel)
+                            }
+                            .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.75)
+                                    .blur(radius: phase.isIdentity ? 0 : 10)
+                            }
                         }
                         .padding()
-                        
                     }
                     .scrollIndicators(.never)
                 }
@@ -70,11 +70,10 @@ struct ContactListView: View {
         viewModel.isLoading = true
         showErrorPopup = false
         errorMessage = ""
-        
+        viewModel.getMatches()
         viewModel.fetchContacts { contactList in
             viewModel.sendContactsToServer(contactList: contactList)
         }
-        
         viewModel.isLoading.toggle()
     }
 }

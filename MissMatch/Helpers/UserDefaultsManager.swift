@@ -15,6 +15,8 @@ class UserDefaultsManager {
     private let contactsKey = "UserDefaultsManager.contactsKey"
     private let refreshTokenKey = "UserDefaultsManager.refreshTokenKey"
     private let savedLikesKey = "UserDefaultsManager.savedLikesKey"
+    private let matchesKey = "UserDefaultsManager.matchesKey"
+    
     
     // MARK: - USER ID
     func saveUserId(_ id: Int) {
@@ -75,14 +77,12 @@ class UserDefaultsManager {
     }
     
     // MARK: - LIKES
-    // Сохранение лайка для контакта
     func saveLike(contactID: String) {
         var savedLikes = getLikes()
         savedLikes.append(contactID)
         saveLikes(savedLikes)
     }
     
-    // Удаление лайка для контакта
     func removeLike(contactID: String) {
         var savedLikes = getLikes()
         if let index = savedLikes.firstIndex(of: contactID) {
@@ -92,12 +92,10 @@ class UserDefaultsManager {
         
     }
     
-    // Получение всех лайков
     func getLikes() -> [String] {
         return UserDefaults.standard.array(forKey: savedLikesKey) as? [String] ?? []
     }
     
-    // Приватный метод для сохранения всех лайков
     private func saveLikes(_ likes: [String]) {
         UserDefaults.standard.set(likes, forKey: savedLikesKey)
     }
@@ -105,6 +103,31 @@ class UserDefaultsManager {
     func removeAllLikes() {
         UserDefaults.standard.removeObject(forKey: savedLikesKey)
         UserDefaults.standard.synchronize()
+    }
+    
+    // MARK: - MATCHES
+    func getMatches() -> [String] {
+        return UserDefaults.standard.array(forKey: matchesKey) as? [String] ?? []
+    }
+    
+    func saveMatches(_ matchResponse: MatchResponse) {
+        var currentMatches = getMatches()
+        currentMatches.append(contentsOf: matchResponse.contactIDS)
+        UserDefaults.standard.set(currentMatches, forKey: matchesKey)
+    }
+    
+    func removeMatches(_ matchResponse: MatchResponse) {
+        var currentMatches = getMatches()
+        for contactID in matchResponse.contactIDS {
+            if let index = currentMatches.firstIndex(of: contactID) {
+                currentMatches.remove(at: index)
+            }
+        }
+        UserDefaults.standard.set(currentMatches, forKey: matchesKey)
+    }
+    
+    func removeAllMatches() {
+        UserDefaults.standard.removeObject(forKey: matchesKey)
     }
 }
 

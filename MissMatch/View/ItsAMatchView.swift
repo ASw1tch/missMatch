@@ -24,7 +24,7 @@ struct ItsAMatchView: View {
                 Text("You’re both a match!")
                     .font(.largeTitle)
                     .bold()
-                Text("It's time to text \(contact.familyName)")
+                Text("It's time to text \(contact.familyName ?? "")")
                     .font(.body)
                     .bold()
                 Button {

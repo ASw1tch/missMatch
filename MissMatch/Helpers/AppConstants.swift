@@ -13,4 +13,5 @@ enum API {
     static let likesApiUrl = "https://gen05.com/api/v1/like/add"
     static let removeLikeApiUrl = "https://gen05.com/api/v1/like/remove"
     static let authCodeApiUrl = "https://gen05.com/api/v1/users/create"
+    static let matchApiUrl = "https://gen05.com/api/v1/match/all?userId=\(String(describing: UserDefaultsManager.shared.getAppleId()!))"
 }

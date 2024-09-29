@@ -20,5 +20,5 @@ struct Like: Codable {
 struct LikeResponse: Codable {
     let success: Bool
     let message: String
-    let likes: [String] //ContactIDs
+    let likes: [String]
 }

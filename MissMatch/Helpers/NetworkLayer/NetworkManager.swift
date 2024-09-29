@@ -16,15 +16,14 @@ final class NetworkManager {
     func sendRequest<T: Decodable>(
         to urlString: String,
         method: HTTPMethod = .GET,
-        headers: [HTTPHeaderField: String] = [
-            .contentType: HTTPHeaderValue.json.rawValue
-        ],
+        headers: [HTTPHeaderField: String] = [:],
         body: Data? = nil,
         responseType: T.Type,
         completion: @escaping (Result<T, NetworkError>) -> Void
     ) {
         guard let request = RequestBuilder.buildRequest(urlString: urlString, method: method, headers: headers, body: body) else {
             completion(.failure(.invalidURL))
+            print("Invalid URL")
             return
         }
         print("Sending request: \(request)")

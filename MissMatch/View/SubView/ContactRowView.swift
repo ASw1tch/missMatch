@@ -9,20 +9,21 @@ import SwiftUI
 
 struct ContactRowView: View {
     
-    enum HeartState {
-        case standBy
-        case liked
-        case matched
-    }
-    
     @Environment(\.colorScheme) var colorScheme
+    @Binding var contact: Contact
     @ObservedObject var viewModel: ContactListViewModel
+    
     @State private var showAlert = false
     @State private var showMatchView = false
     @State private var showPaywall = false
     
     private let likesRepository = LikesRepository()
-    @State var contact: Contact
+    
+    enum HeartState {
+        case standBy
+        case liked
+        case matched
+    }
     
     var body: some View {
         HStack {
@@ -39,7 +40,6 @@ struct ContactRowView: View {
         }
     }
     
-    // Contact info section
     private var contactInfo: some View {
         HStack {
             Text(contact.givenName ?? "Undefined name").bold()
@@ -47,7 +47,6 @@ struct ContactRowView: View {
         }
     }
     
-    // Like button with state
     private var likeButton: some View {
         Button(action: handleButtonAction) {
             Image(systemName: heartImage)
@@ -64,37 +63,31 @@ struct ContactRowView: View {
     
     private func handleButtonAction() {
         print("Contact is liked: \(contact.iLiked)")
+        contact.iLiked.toggle()
         if contact.iLiked {
-            // Удаляем лайк
-            removeLike(contactID: contact.id)
-        } else {
-            // Проверяем, можно ли поставить лайк
             if !likesRepository.canLike() {
                 showAlert = true
                 return
+            } else {
+                print("Contact is liked")
+                UserDefaultsManager.shared.saveLike(contactID: contact.id)
+                sendLikeRequest(contactID: contact.id, remove: false)
             }
-            // Добавляем лайк
-            sendLikeRequest(contactID: contact.id, remove: false)
+        } else {
+            print("Contact is unliked")
+            UserDefaultsManager.shared.removeLike(contactID: contact.id)
+            sendLikeRequest(contactID: contact.id, remove: true)
         }
-        
     }
-    // Функция для отправки лайка на сервер
+    
     func sendLikeRequest(contactID: String, remove: Bool) {
         guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
-//            showErrorPopup = true
-//            errorMessage = "Apple ID is not found."
             return
         }
         let likeRequest = Like(fromUserID: appleIdUser, toContactID: contactID)
-        // Преобразуем ContactList в JSON Data
         guard let requestBody = try? JSONEncoder().encode(likeRequest) else {
-//            showErrorPopup = true
-//            errorMessage = "Can't convert contact data to JSON."
             return
         }
-        
-
-//        isLoading = true
         let headers: [HTTPHeaderField: String] = [
             .contentType: HTTPHeaderValue.json.rawValue,
             .accept: HTTPHeaderValue.acceptAll.rawValue
@@ -108,50 +101,21 @@ struct ContactRowView: View {
             responseType: LikeResponse.self
         ) { result in
             DispatchQueue.main.async {
-//                self.isLoading = false
                 switch result {
                 case .success(let response):
                     if response.success {
                         print("Response: \(response.likes)")
-                        
-                        // 1. Очистить все лайки
-                        UserDefaultsManager.shared.removeAllLikes()
-                        
-                        // 2. Сохранить новые лайки
-                        let newLikes = response.likes // это массив contactId, который ты получаешь от сервера
-                        
-                        for contactID in newLikes {
-                            UserDefaultsManager.shared.saveLike(contactID: contactID)
-                        }
-                
-                        if remove {
-                            contact.iLiked = false
-                        } else {
-                            contact.iLiked = newLikes.contains(contact.id)
-                        }
-                        
-                        print(UserDefaultsManager.shared.getLikes()) // Проверить, что лайки сохранились
+                        print(UserDefaultsManager.shared.getLikes())
                     } else {
-//                        self.showErrorPopup = true
-//                        self.errorMessage = "Server responded with an error: \(response.message)"
                         print("Server error: \(response.message)")
                     }
                 case .failure(let error):
-//                    self.showErrorPopup = true
-//                    self.errorMessage = "Error: \(error.localizedDescription)"
                     print("Request failed: \(error)")
                 }
             }
         }
     }
     
-    // Функция для удаления лайка
-    private func removeLike(contactID: String) {
-        sendLikeRequest(contactID: contactID, remove: true)
-    }
-    
-    
-    // Heart image based on state
     private var heartImage: String {
         switch heartState {
         case .standBy:
@@ -163,7 +127,6 @@ struct ContactRowView: View {
         }
     }
     
-    // Heart color based on state
     private var heartColor: Color {
         switch heartState {
         case .standBy:
@@ -175,7 +138,6 @@ struct ContactRowView: View {
         }
     }
     
-    // Heart state based on contact properties
     private var heartState: HeartState {
         if contact.itsMatch {
             return .matched
@@ -186,7 +148,6 @@ struct ContactRowView: View {
         }
     }
     
-    // Background for matched contacts
     @ViewBuilder
     private var contactBackground: some View {
         if contact.itsMatch {
@@ -196,7 +157,6 @@ struct ContactRowView: View {
         }
     }
     
-    // Hearts overlay for matched contacts
     @ViewBuilder
     private var heartsOverlay: some View {
         ZStack {
@@ -218,12 +178,10 @@ struct ContactRowView: View {
         }
     }
     
-    // Shadow color based on color scheme
     private var shadowColor: Color {
         colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray
     }
     
-    // Alert view for paywall
     private var alertView: Alert {
         Alert(
             title: Text("Limit Reached"),
@@ -235,15 +193,3 @@ struct ContactRowView: View {
         )
     }
 }
-
-    struct ContactRowView_Previews: PreviewProvider {
-        static var previews: some View {
-            let sampleContact = Contact(identifier: "22", givenName: "Mary", familyName: "Smith", phoneNumbers: ["+79332231312"])
-            let viewModel = ContactListViewModel()
-            viewModel.contacts = [sampleContact]
-            
-            return ContactRowView(viewModel: viewModel, contact: sampleContact)
-                .previewLayout(.sizeThatFits)
-                .padding()
-        }
-    }
