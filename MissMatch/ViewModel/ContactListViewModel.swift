@@ -1,158 +1,204 @@
+//
+//  ContactListView.swift
+//  MissMatch
+//
+//  Created by Anatoliy Petrov on 25.7.24..
+
 import Foundation
 import Contacts
-import CoreTelephony
-
 
 class ContactListViewModel: ObservableObject {
     
-    @Published var contacts: [ContactList] = []
-    @Published var likedContact = false
-    @Published var matched = false
-    @Published var heartCount = 0
+    @Published var contacts: [Contact] = []
+    @Published var isLoading = false
+    @Published var showErrorPopup = false
+    @Published var errorMessage = ""
     
-    private let likesRepository = LikesRepository()
-    
-    init() {
-        self.fetchAllContacts()
-    }
-    
-        
-    func fetchAllContacts() {
+    func fetchContacts(completion: @escaping (ContactList) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let store = CNContactStore()
             store.requestAccess(for: .contacts) { granted, error in
                 guard granted else {
+                    DispatchQueue.main.async {
+                        self.showErrorPopup = true
+                        self.errorMessage = "Access to contacts was not granted."
+                    }
                     return
                 }
+                
+                var contacts = [Contact]()
                 let keys = [CNContactGivenNameKey,
                             CNContactPhoneNumbersKey,
                             CNContactFamilyNameKey,
-                            CNContactJobTitleKey,
-                            CNContactEmailAddressesKey] as [CNKeyDescriptor]
+                            CNContactIdentifierKey] as [CNKeyDescriptor]
                 let fetchRequest = CNContactFetchRequest(keysToFetch: keys)
                 
                 do {
-                    var fetchedContacts: [ContactList] = []
-                    var savedContactIDs = UserDefaults.standard.dictionary(forKey: "savedContactIDs") as? [String: Int] ?? [:]
-                    var savedContacts: [SavedContact] = [] // Массив для сохраненных контактов
-                    
-                    try store.enumerateContacts(with: fetchRequest) { contact, _ in
-                        let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
+                    try store.enumerateContacts(with: fetchRequest) { (cnContact, stop) in
+                        let phoneNumbers = cnContact.phoneNumbers.map { $0.value.stringValue }
                         let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
-                        let uniqueKey = "\(contact.givenName)\(contact.familyName)\(normalizedPhoneNumbers.joined())"
                         
-                        let contactID: Int
-                        if let savedID = savedContactIDs[uniqueKey] {
-                            contactID = savedID
-                        } else {
-                            contactID = Int.random(in: 1000...900000)
-                            savedContactIDs[uniqueKey] = contactID
-                            UserDefaults.standard.set(savedContactIDs, forKey: "savedContactIDs")
-                        }
-                        
-                        let contact = ContactList(
-                            id: contactID,
-                            name: contact.givenName,
-                            surname: contact.familyName,
-                            phoneNumber: normalizedPhoneNumbers
+                        let contact = Contact(
+                            identifier: cnContact.identifier,
+                            givenName: cnContact.givenName,
+                            familyName: cnContact.familyName,
+                            phoneNumbers: normalizedPhoneNumbers
                         )
-                        fetchedContacts.append(contact)
-                        
-                        // Создаем объект SavedContact для каждого контакта
-                        let savedContact = SavedContact(id: contactID, phones: normalizedPhoneNumbers)
-                        savedContacts.append(savedContact)
+                        contacts.append(contact)
                     }
                     
                     DispatchQueue.main.async {
-                        self.contacts = fetchedContacts
+                        self.contacts = contacts
+                        self.isLoading = false
                         self.loadLikes()
                         
-                        // Отправляем контакты на сервер
-                        self.sendContactsToServer(savedContacts: savedContacts)
+                        let contactList = self.sortContactsForServer(userID: UserDefaultsManager.shared.getAppleId() ?? "No Apple Id", contacts: contacts)
+                        completion(contactList)
                     }
                     
                 } catch {
-                    print("Failed to fetch contacts: \(error)")
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.showErrorPopup = true
+                        self.errorMessage = "Failed to fetch contacts."
+                    }
                 }
             }
         }
     }
     
-    func sendContactsToServer(savedContacts: [SavedContact]) {
-        // Получаем userId, который нужно передать в запросе
-        guard let userId = UserDefaultsManager.shared.getAppleId() else {
-            print("User ID not found")
+    func sendContactsToServer(contactList: ContactList) {
+        guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
+            showErrorPopup = true
+            errorMessage = "Apple ID is not found."
             return
         }
         
-        // Создаем объект SaveContactRequest
-        let saveContactRequest = SaveContactRequest(userId: userId, contacts: savedContacts)
+        // Преобразуем ContactList в JSON Data
+        guard let requestBody = try? JSONEncoder().encode(contactList) else {
+            showErrorPopup = true
+            errorMessage = "Can't convert contact data to JSON."
+            return
+        }
         
-        // Отправляем данные через NetworkManager
+        isLoading = true
+        let headers: [HTTPHeaderField: String] = [
+            .contentType: HTTPHeaderValue.json.rawValue,
+            .accept: HTTPHeaderValue.acceptAll.rawValue
+        ]
         
-    }
-    
-    func getAllContacts() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            var contactsArray = [ContactList]()
-            let store = CNContactStore()
-            let keysToFetch = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey] as [CNKeyDescriptor]
-            let request = CNContactFetchRequest(keysToFetch: keysToFetch)
-            
-            do {
-                try store.enumerateContacts(with: request) { contact, stop in
-                    let phoneNumbers = contact.phoneNumbers.map { $0.value.stringValue }
-                    let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
-                    
-                    let contactItem = ContactList(
-                        id: Int.random(in: 1000...9000),
-                        name: contact.givenName,
-                        surname: contact.familyName,
-                        phoneNumber: phoneNumbers
-                    )
-                    contactsArray.append(contactItem)
+        NetworkManager.shared.sendRequest(
+            to: API.contactsApiUrl,
+            method: .POST,
+            headers: headers,
+            body: requestBody,
+            responseType: ContactsResponse.self
+        ) { result in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                switch result {
+                case .success(let response):
+                    if response.isSuccessful {
+                        self.errorMessage = response.message
+                        
+                        UserDefaultsManager.shared.removeAllContacts()
+                        for contact in response.contacts {
+                            UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones)
+                            
+                        }
+                        // Получаем локальные контакты для сопоставления
+                        let localContacts = self.contacts
+                        
+                        // Преобразуем данные с сервера и обновляем UI
+                        let mappedContacts = self.mapDTOToContact(contactDTOs: response.contacts, localContacts: localContacts)
+                        self.contacts = mappedContacts // Обновляем UI
+                        
+                    } else {
+                        self.showErrorPopup = true
+                        self.errorMessage = "Server responded with an error: \(response.message)"
+                        print("Server error: \(response.message)")
+                    }
+                case .failure(let error):
+                    self.showErrorPopup = true
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    print("Request failed: \(error)")
                 }
-            } catch {
-                print("Failed to fetch contacts, error: \(error)")
             }
         }
     }
     
-    
-    
-    func toggleMiss(contact: ContactList) {
-        guard let userId = UserDefaultsManager.shared.getUserId() else {
-            print("User ID not found.")
-            return
-        }
+    func sortContactsForServer(userID: String, contacts: [Contact]) -> ContactList {
+        var toAdd = [To]()
+        var toUpdate = [To]()
+        var toRemove = [String]()
         
-        if let index = contacts.firstIndex(where: { $0.id == contact.id }) {
-            if contacts[index].iLiked {
-                contacts[index].iLiked.toggle()
-                contacts[index].itsMatch = false
-                likesRepository.removeLike(contactID: contact.id)
-            } else if likesRepository.canLike() {
-                contacts[index].iLiked.toggle()
-                likesRepository.saveLike(contactID: contact.id)
+        toUpdate.removeAll()
+        toAdd.removeAll()
+        toRemove.removeAll()
+        
+        let savedContacts = UserDefaultsManager.shared.getAllContacts()
+        
+        for contact in contacts {
+            if let savedPhones = UserDefaultsManager.shared.getContactPhones(for: contact.identifier) {
+                if savedPhones != contact.phoneNumbers {
+                    let toUpdateContact = To(contactID: contact.identifier, phones: contact.phoneNumbers)
+                    toUpdate.append(toUpdateContact)
+                }
             } else {
-                print("Like limit reached")
+                let toAddContact = To(contactID: contact.identifier, phones: contact.phoneNumbers)
+                toAdd.append(toAddContact)
             }
-            loadLikes()
-            
-            let contactIds = contacts.filter { $0.iLiked }.map { $0.id }
-            //let likeRequest = LikeRequest(fromUserId: userId, contactIds: contactIds)
-            //NetworkManager.shared.postData(for: .likes(likeRequest))
+        }
+        
+        // To Remove
+        for savedContactID in savedContacts.keys {
+            if !contacts.contains(where: { $0.identifier == savedContactID }) {
+                toRemove.append(savedContactID)
+                UserDefaultsManager.shared.removeContact(for: savedContactID)
+            }
+        }
+        
+        return ContactList(
+            userID: userID,
+            toAdd: toAdd,
+            toUpdate: toUpdate,
+            toRemove: toRemove
+        )
+    }
+    
+    func mapDTOToContact(contactDTOs: [ContactDTO], localContacts: [Contact]) -> [Contact] {
+        return contactDTOs.compactMap { dto in
+            if let matchingLocalContact = localContacts.first(where: { $0.identifier == dto.contactId }) {
+                // Если найден локальный контакт по идентификатору, используем его имена
+                return Contact(
+                    identifier: dto.contactId,
+                    givenName: matchingLocalContact.givenName,
+                    familyName: matchingLocalContact.familyName,
+                    phoneNumbers: dto.phones,
+                    iLiked: dto.iLiked,
+                    itsMatch: dto.itsMatch
+                )
+            } else {
+                // Если не найден локальный контакт, просто возвращаем данные с сервера
+                return Contact(
+                    identifier: dto.contactId,
+                    givenName: nil,
+                    familyName: nil,
+                    phoneNumbers: dto.phones,
+                    iLiked: dto.iLiked,
+                    itsMatch: dto.itsMatch
+                )
+            }
         }
     }
     
     func loadLikes() {
-        let savedLikes = likesRepository.loadLikes()
-        heartCount = savedLikes.count
-        for i in 0..<contacts.count {
-            if savedLikes.contains(contacts[i].id) {
-                contacts[i].iLiked = true
-            }
+        let likedContacts = UserDefaultsManager.shared.getLikes() // Получаем лайки из UserDefaults
+        
+        // Обновляем статус каждого контакта
+        for index in contacts.indices {
+            contacts[index].iLiked = likedContacts.contains(contacts[index].identifier)
+            print("Contact \(contacts[index].identifier) iLiked set to: \(contacts[index].iLiked)")
         }
     }
 }
-

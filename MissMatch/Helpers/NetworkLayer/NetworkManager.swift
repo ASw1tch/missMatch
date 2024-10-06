@@ -27,7 +27,7 @@ final class NetworkManager {
             completion(.failure(.invalidURL))
             return
         }
-        print(request.description)
+        print("Sending request: \(request)")
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             let result = ResponseHandler.handleResponse(data, response: response, error: error, responseType: responseType)
