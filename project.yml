@@ -42,6 +42,13 @@ targets:
           NSExceptionDomains: 
             51.250.55.29: 
               NSExceptionAllowsInsecureHTTPLoads: true
+        UIBackgroundModes:
+        - fetch
+        - remote-notification
+      NSAppTransportSecurity:
+        NSAllowsArbitraryLoads: true
+      NSUserTrackingUsageDescription: "This identifier will be used for providing relevant notifications and content."
+      NSLocationWhenInUseUsageDescription: "We need access to your location to provide personalized notifications."
     settings:
       base:
         TARGETED_DEVICE_FAMILY: 1

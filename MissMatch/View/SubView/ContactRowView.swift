@@ -35,8 +35,7 @@ struct ContactRowView: View {
         .background(contactBackground)
         .cornerRadius(8)
         .shadow(color: shadowColor, radius: 3, x: 0, y: 2)
-        .sheet(isPresented: $showMatchView) {
-            ItsAMatchView(contact: contact)
+        .onAppear {
         }
     }
     

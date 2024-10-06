@@ -6,6 +6,9 @@
 
 import Foundation
 import Contacts
+import Combine
+import SwiftUI
+import UserNotifications
 
 class ContactListViewModel: ObservableObject {
     
@@ -183,8 +186,7 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
-    func getMatches() {
-        isLoading = true
+    func getMatches(completion: @escaping (String?) -> Void) {
         let headers: [HTTPHeaderField: String] = [:]
         
         NetworkManager.shared.sendRequest(
@@ -195,13 +197,16 @@ class ContactListViewModel: ObservableObject {
             responseType: MatchResponse.self
         ) { result in
             DispatchQueue.main.async {
-                self.isLoading = false
                 switch result {
                 case .success(let response):
                     print("Matches received: \(response.contactIDS)")
                     UserDefaultsManager.shared.removeAllMatches()
                     UserDefaultsManager.shared.saveMatches(response)
                     print(UserDefaultsManager.shared.getMatches())
+                    let shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
+                    let newMatchID = response.contactIDS.first(where: { !shownMatches.contains($0) })
+                    
+                    completion(newMatchID) 
                 case .failure(let error):
                     self.showErrorPopup = true
                     self.errorMessage = "Error: \(error.localizedDescription)"
@@ -209,6 +214,48 @@ class ContactListViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    private var timer: Timer?
+    
+    func startRegularUpdates(interval: TimeInterval) {
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.getMatches { newMatchID in
+                if let matchID = newMatchID {
+                    // Если есть новый матч, ищем контакт и показываем нотификацию
+                    if let matchedContact = self?.contacts.first(where: { $0.identifier == matchID }) {
+                        self?.scheduleLocalNotification(contact: matchedContact)
+                        
+                        // Обновляем список показанных мэтчей
+                        var shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
+                        shownMatches.append(matchID)
+                        UserDefaults.standard.set(shownMatches, forKey: "shownMatches")
+                    }
+                }
+            }
+        }
+    }
+    
+    func scheduleLocalNotification(contact: Contact) {
+        let content = UNMutableNotificationContent()
+        content.title = "It's a Match!"
+        content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "") have matched!"
+        content.sound = .default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: "matchNotification", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { (error) in
+            if let error = error {
+                print("Error scheduling notification: \(error.localizedDescription)")
+            } else {
+                print("Notification successfully scheduled!")
+            }
+        }
+    }
+    func stopRegularUpdates() {
+        timer?.invalidate()
+        timer = nil
     }
 }
 
