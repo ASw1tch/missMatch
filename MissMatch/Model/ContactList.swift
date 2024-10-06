@@ -47,12 +47,9 @@ struct Contact: Identifiable, Decodable {
         return identifier
     }
     
-    mutating func toggleLike() {
-        iLiked.toggle()
-    }
-    
-    mutating func toggleMatch() {
-        itsMatch.toggle()
+    mutating func updateLikeStatus() {
+        let likedContacts = UserDefaultsManager.shared.getLikes()
+        self.iLiked = likedContacts.contains(id)
     }
 }
 

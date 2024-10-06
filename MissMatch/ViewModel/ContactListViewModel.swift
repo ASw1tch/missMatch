@@ -6,6 +6,9 @@
 
 import Foundation
 import Contacts
+import Combine
+import SwiftUI
+import UserNotifications
 
 class ContactListViewModel: ObservableObject {
     
@@ -38,11 +41,16 @@ class ContactListViewModel: ObservableObject {
                         let phoneNumbers = cnContact.phoneNumbers.map { $0.value.stringValue }
                         let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
                         
+                        let likedContacts = UserDefaultsManager.shared.getLikes()
+                        let matchedContacts = UserDefaultsManager.shared.getMatches()
+                        
                         let contact = Contact(
                             identifier: cnContact.identifier,
                             givenName: cnContact.givenName,
                             familyName: cnContact.familyName,
-                            phoneNumbers: normalizedPhoneNumbers
+                            phoneNumbers: normalizedPhoneNumbers,
+                            iLiked: likedContacts.contains(cnContact.identifier),
+                            itsMatch: matchedContacts.contains(cnContact.identifier)
                         )
                         contacts.append(contact)
                     }
@@ -50,12 +58,11 @@ class ContactListViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self.contacts = contacts
                         self.isLoading = false
-                        self.loadLikes()
                         
                         let contactList = self.sortContactsForServer(userID: UserDefaultsManager.shared.getAppleId() ?? "No Apple Id", contacts: contacts)
+                        
                         completion(contactList)
                     }
-                    
                 } catch {
                     DispatchQueue.main.async {
                         self.isLoading = false
@@ -74,7 +81,6 @@ class ContactListViewModel: ObservableObject {
             return
         }
         
-        // Преобразуем ContactList в JSON Data
         guard let requestBody = try? JSONEncoder().encode(contactList) else {
             showErrorPopup = true
             errorMessage = "Can't convert contact data to JSON."
@@ -104,15 +110,7 @@ class ContactListViewModel: ObservableObject {
                         UserDefaultsManager.shared.removeAllContacts()
                         for contact in response.contacts {
                             UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones)
-                            
                         }
-                        // Получаем локальные контакты для сопоставления
-                        let localContacts = self.contacts
-                        
-                        // Преобразуем данные с сервера и обновляем UI
-                        let mappedContacts = self.mapDTOToContact(contactDTOs: response.contacts, localContacts: localContacts)
-                        self.contacts = mappedContacts // Обновляем UI
-                        
                     } else {
                         self.showErrorPopup = true
                         self.errorMessage = "Server responded with an error: \(response.message)"
@@ -174,9 +172,7 @@ class ContactListViewModel: ObservableObject {
                     identifier: dto.contactId,
                     givenName: matchingLocalContact.givenName,
                     familyName: matchingLocalContact.familyName,
-                    phoneNumbers: dto.phones,
-                    iLiked: dto.iLiked,
-                    itsMatch: dto.itsMatch
+                    phoneNumbers: dto.phones
                 )
             } else {
                 // Если не найден локальный контакт, просто возвращаем данные с сервера
@@ -184,21 +180,82 @@ class ContactListViewModel: ObservableObject {
                     identifier: dto.contactId,
                     givenName: nil,
                     familyName: nil,
-                    phoneNumbers: dto.phones,
-                    iLiked: dto.iLiked,
-                    itsMatch: dto.itsMatch
+                    phoneNumbers: dto.phones
                 )
             }
         }
     }
     
-    func loadLikes() {
-        let likedContacts = UserDefaultsManager.shared.getLikes() // Получаем лайки из UserDefaults
+    func getMatches(completion: @escaping (String?) -> Void) {
+        let headers: [HTTPHeaderField: String] = [:]
         
-        // Обновляем статус каждого контакта
-        for index in contacts.indices {
-            contacts[index].iLiked = likedContacts.contains(contacts[index].identifier)
-            print("Contact \(contacts[index].identifier) iLiked set to: \(contacts[index].iLiked)")
+        NetworkManager.shared.sendRequest(
+            to: API.matchApiUrl,
+            method: .GET,
+            headers: headers,
+            body: nil,
+            responseType: MatchResponse.self
+        ) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    print("Matches received: \(response.contactIDS)")
+                    UserDefaultsManager.shared.removeAllMatches()
+                    UserDefaultsManager.shared.saveMatches(response)
+                    print(UserDefaultsManager.shared.getMatches())
+                    let shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
+                    let newMatchID = response.contactIDS.first(where: { !shownMatches.contains($0) })
+                    
+                    completion(newMatchID) 
+                case .failure(let error):
+                    self.showErrorPopup = true
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    print("Request failed: \(error)")
+                }
+            }
         }
     }
+    
+    private var timer: Timer?
+    
+    func startRegularUpdates(interval: TimeInterval) {
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.getMatches { newMatchID in
+                if let matchID = newMatchID {
+                    // Если есть новый матч, ищем контакт и показываем нотификацию
+                    if let matchedContact = self?.contacts.first(where: { $0.identifier == matchID }) {
+                        self?.scheduleLocalNotification(contact: matchedContact)
+                        
+                        // Обновляем список показанных мэтчей
+                        var shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
+                        shownMatches.append(matchID)
+                        UserDefaults.standard.set(shownMatches, forKey: "shownMatches")
+                    }
+                }
+            }
+        }
+    }
+    
+    func scheduleLocalNotification(contact: Contact) {
+        let content = UNMutableNotificationContent()
+        content.title = "It's a Match!"
+        content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "") have matched!"
+        content.sound = .default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: "matchNotification", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { (error) in
+            if let error = error {
+                print("Error scheduling notification: \(error.localizedDescription)")
+            } else {
+                print("Notification successfully scheduled!")
+            }
+        }
+    }
+    func stopRegularUpdates() {
+        timer?.invalidate()
+        timer = nil
+    }
 }
+

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Contacts
+import UserNotifications
 
 struct ContactPermissonView: View {
     @Environment(\.colorScheme) var colorScheme
@@ -45,14 +46,6 @@ struct ContactPermissonView: View {
                             .position(x: geometry.size.width / 2.2 , y: geometry.size.height / 4)
                             .bold()
                             .padding()
-//                        VStack(alignment: .center) {
-//                            RoundedRectangle(cornerRadius: 10)
-//                                .stroke(Color.red, lineWidth: 5)
-//                                .background(Color(UIColor.systemBackground))
-//                                .frame(width: 320, height: 230)
-//                                .cornerRadius(10)
-//                                .position(x: geometry.size.width / 2, y: geometry.size.height / 2 + geometry.size.height * 0.011)
-//                        }
                     }
                 }
                 .fullScreenCover(isPresented: $showNextView) {
@@ -73,10 +66,27 @@ struct ContactPermissonView: View {
         store.requestAccess(for: .contacts) { granted, error in
             DispatchQueue.main.async {
                 if granted {
-                    showNextView = true
+                    requestNotificationPermission()
                 } else {
                     isNotGranted = true
                 }
+            }
+        }
+    }
+    
+    func requestNotificationPermission() {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("Error requesting notification permissions: \(error)")
+            }
+            
+            if granted {
+                showNextView = true
+                print("Notification permission granted")
+            } else {
+                isNotGranted = true
+                print("Notification permission denied")
             }
         }
     }

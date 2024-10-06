@@ -9,9 +9,9 @@ import SwiftUI
 
 struct ContactListView: View {
     
-    @StateObject var viewModel = ContactListViewModel()
-    @State private var selectedContact: ContactList? = nil
+    @ObservedObject var viewModel = ContactListViewModel()
     @State var showMatchView = false
+    @State var matchedContact: Contact?
     @State var testId = ""
     @State private var isLoading = false
     @State private var showErrorPopup = false
@@ -44,18 +44,19 @@ struct ContactListView: View {
                                 .bold()
                                 .padding()
                             
-                            ForEach(viewModel.contacts
-                                .sorted { $0.givenName! < $1.givenName! }) { contact in
-                                    ContactRowView(viewModel: viewModel, contact: contact)
-                                }.scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                                    content
-                                        .opacity(phase.isIdentity ? 1 : 0)
-                                        .scaleEffect(phase.isIdentity ? 1 : 0.75)
-                                        .blur(radius: phase.isIdentity ? 0 : 10)
-                                }
+                            ForEach($viewModel.contacts.sorted(by: {
+                                ($0.givenName.wrappedValue ?? "") < ($1.givenName.wrappedValue ?? "")
+                            })) { $contact in
+                                ContactRowView(contact: $contact, viewModel: viewModel)
+                            }
+                            .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.75)
+                                    .blur(radius: phase.isIdentity ? 0 : 10)
+                            }
                         }
                         .padding()
-                        
                     }
                     .scrollIndicators(.never)
                 }
@@ -63,6 +64,14 @@ struct ContactListView: View {
         }
         .onAppear {
             reloadContacts()
+            startTimer()
+            checkAndShowMatchScreen()
+        }
+        .fullScreenCover(item: $matchedContact) { contact in
+            ItsAMatchView(contact: contact)
+        }
+        .onDisappear {
+            viewModel.stopRegularUpdates()
         }
     }
     
@@ -70,12 +79,34 @@ struct ContactListView: View {
         viewModel.isLoading = true
         showErrorPopup = false
         errorMessage = ""
-        
         viewModel.fetchContacts { contactList in
             viewModel.sendContactsToServer(contactList: contactList)
         }
-        
         viewModel.isLoading.toggle()
+    }
+    
+    func startTimer() {
+        viewModel.startRegularUpdates(interval: 10)
+    }
+    
+    func checkAndShowMatchScreen() {
+        viewModel.getMatches { newMatchID in
+            guard let matchID = newMatchID else { return }
+            
+            if let matchedContact = viewModel.contacts.first(where: { $0.identifier == matchID }) {
+                // Показ экрана мэтча
+                self.matchedContact = matchedContact
+                self.showMatchView = true
+                
+                // Отправка уведомления
+                viewModel.scheduleLocalNotification(contact: matchedContact)
+                
+                // Обновление показанных мэтчей
+                var shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
+                shownMatches.append(matchID)
+                UserDefaults.standard.set(shownMatches, forKey: "shownMatches")
+            }
+        }
     }
 }
 

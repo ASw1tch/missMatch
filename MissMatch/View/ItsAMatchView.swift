@@ -10,6 +10,7 @@ import SwiftUI
 struct ItsAMatchView: View {
     @Environment(\.presentationMode) var presentationMode
     
+    
     var contact: Contact
     
     var body: some View {
@@ -24,10 +25,11 @@ struct ItsAMatchView: View {
                 Text("You’re both a match!")
                     .font(.largeTitle)
                     .bold()
-                Text("It's time to text \(contact.familyName)")
+                Text("It's time to text \(contact.givenName ?? " ") \(contact.familyName ?? "")")
                     .font(.body)
                     .bold()
                 Button {
+                    
                     presentationMode.wrappedValue.dismiss()
                     print("Wow")
                 } label: {
