@@ -31,7 +31,7 @@ struct SignInView: View {
                     switch result {
                     case .success(let authResults):
                         handleAuthorization(authResults)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        if signInVM.shouldNavigate {
                             isProceed.toggle()
                         }
                     case .failure(let error):
@@ -60,7 +60,7 @@ struct SignInView: View {
             let userId = appleIDCredential.user
             let authorizationCode = appleIDCredential.authorizationCode
             let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
-            
+          
             UserDefaultsManager.shared.saveAppleId(userId)
             
             signInVM.sendToServer(authorizationCode: authorizationCodeString)

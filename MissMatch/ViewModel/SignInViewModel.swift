@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 class SignInViewModel: ObservableObject {
     
     @Published var contacts: [ContactList] = []
@@ -15,7 +14,10 @@ class SignInViewModel: ObservableObject {
     @Published var showErrorPopup = false
     @Published var errorMessage = ""
     @Published var shouldNavigate = false
-
+    
+    private var retryCount = 0
+    private let maxRetryCount = 1
+    
     init() {}
     
     func sendToServer(authorizationCode: String) {
@@ -24,7 +26,6 @@ class SignInViewModel: ObservableObject {
             errorMessage = "Apple ID is not found."
             return
         }
-        
         
         guard let requestBody = appleIdUser.data(using: .utf8) else {
             showErrorPopup = true
@@ -50,14 +51,39 @@ class SignInViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     UserDefaultsManager.shared.saveRefreshToken(response.refreshToken)
-                    print(UserDefaultsManager.shared.getRefreshToken() ?? "No token")
+                    self.errorMessage = "Welcome!"
                     self.showErrorPopup = true
-                    self.errorMessage = "ПОЛУЧИЛОСЬ"
+                    self.shouldNavigate = true
                 case .failure(let error):
-                    self.showErrorPopup = true
-                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    self.handleError(error: error, authorizationCode: authorizationCode)
                 }
             }
+        }
+    }
+    
+    private func handleError(error: NetworkError, authorizationCode: String) {
+        switch error {
+        case .clientError(let statusCode):
+            self.errorMessage = "Authorization failed. Check your credentials. (Error \(statusCode))"
+            self.showErrorPopup = true
+        case .serverError(let statusCode):
+            if self.retryCount < self.maxRetryCount {
+                showErrorPopup = true
+                errorMessage = "Retrying Authorization"
+                self.retryCount += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.sendToServer(authorizationCode: authorizationCode)
+                }
+            } else {
+                self.errorMessage = "Server not responding. Try again later. (Error \(statusCode))"
+                self.showErrorPopup = true
+            }
+        case .custom(let error):
+            self.errorMessage = "Network error: \(error.localizedDescription)"
+            self.showErrorPopup = true
+        default:
+            self.errorMessage = "Unknown error occurred."
+            self.showErrorPopup = true
         }
     }
 }

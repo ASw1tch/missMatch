@@ -11,6 +11,7 @@ enum NetworkError: Error {
     case invalidURL
     case noData
     case decodingError
+    case clientError(statusCode: Int)
     case serverError(statusCode: Int)
     case custom(error: Error)
     
@@ -22,8 +23,10 @@ enum NetworkError: Error {
             return "No data received."
         case .decodingError:
             return "Failed to decode the response."
+        case .clientError(let statusCode):
+            return "Client error: \(statusCode)"
         case .serverError(let statusCode):
-            return "Server returned error with status code: \(statusCode)."
+            return "Server error: \(statusCode)"
         case .custom(let error):
             return error.localizedDescription
         }

@@ -17,6 +17,7 @@ class UserDefaultsManager {
     private let savedLikesKey = "UserDefaultsManager.savedLikesKey"
     private let matchesKey = "UserDefaultsManager.matchesKey"
     private let likeServerKey = "UserDefaultsManager.likeServerKey"
+    private let userNameKey = "UserDefaultsManager.userNameKey"
     
     
     // MARK: - USER ID
@@ -148,6 +149,20 @@ class UserDefaultsManager {
     
     func removeAllArrayLikes() {
         UserDefaults.standard.removeObject(forKey: likeServerKey)
+    }
+    
+    // MARK: - User Name
+    
+    func saveUserName(_ userName: String) {
+        UserDefaults.standard.set(userName, forKey: userNameKey)
+    }
+    
+    func getUserName() -> String? {
+        return UserDefaults.standard.string(forKey: userNameKey)
+    }
+    
+    func removeUserName() {
+        UserDefaults.standard.removeObject(forKey: userNameKey)
     }
 }
 
