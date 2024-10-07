@@ -16,7 +16,7 @@ class SignInViewModel: ObservableObject {
     @Published var shouldNavigate = false
     
     private var retryCount = 0
-    private let maxRetryCount = 1
+    private let maxRetryCount = 2
     
     init() {}
     
@@ -62,6 +62,9 @@ class SignInViewModel: ObservableObject {
     }
     
     private func handleError(error: NetworkError, authorizationCode: String) {
+        defer {
+            retryCount = 0
+        }
         switch error {
         case .clientError(let statusCode):
             self.errorMessage = "Authorization failed. Check your credentials. (Error \(statusCode))"
