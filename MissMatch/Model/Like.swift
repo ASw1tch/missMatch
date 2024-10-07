@@ -22,3 +22,19 @@ struct LikeResponse: Codable {
     let message: String
     let likes: [String]
 }
+
+struct LikeArray: Codable {
+    let fromUserID: String
+    let toContactIDs: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case fromUserID = "fromUserId"
+        case toContactIDs = "toContactIds"
+    }
+}
+
+struct LikeArrayResponse: Codable {
+    let success: Bool
+    let message: String
+    let likes: [String]
+}

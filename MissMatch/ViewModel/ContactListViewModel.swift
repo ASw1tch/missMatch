@@ -199,10 +199,10 @@ class ContactListViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
-                    print("Matches received: \(response.contactIDS)")
+                    //print("Matches received: \(response.contactIDS)")
                     UserDefaultsManager.shared.removeAllMatches()
                     UserDefaultsManager.shared.saveMatches(response)
-                    print(UserDefaultsManager.shared.getMatches())
+                    //print(UserDefaultsManager.shared.getMatches())
                     let shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
                     let newMatchID = response.contactIDS.first(where: { !shownMatches.contains($0) })
                     
@@ -256,6 +256,57 @@ class ContactListViewModel: ObservableObject {
     func stopRegularUpdates() {
         timer?.invalidate()
         timer = nil
+    }
+    
+    func sendLikeServerDifferenceRequest(toContactIDs: [String]) {
+        guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
+            return
+        }
+        let likeArrayRequest = LikeArray(fromUserID: appleIdUser, toContactIDs: toContactIDs)
+        guard let requestBody = try? JSONEncoder().encode(likeArrayRequest) else {
+            return
+        }
+        let headers: [HTTPHeaderField: String] = [
+            .contentType: HTTPHeaderValue.json.rawValue,
+            .accept: HTTPHeaderValue.acceptAll.rawValue
+        ]
+        
+        NetworkManager.shared.sendRequest(
+            to: API.likeArrayApiUrl,
+            method: .POST,
+            headers: headers,
+            body: requestBody,
+            responseType: LikeArrayResponse.self
+        ) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if response.success {
+                        UserDefaultsManager.shared.saveServerLike(contactIDs: response.likes)
+                        print(UserDefaultsManager.shared.getServerLikes())
+                    } else {
+                        print("Server error: \(response.message)")
+                    }
+                case .failure(let error):
+                    print("Request failed: \(error)")
+                }
+            }
+        }
+    }
+    
+    func checkLikesDifferences() -> [String]? {
+        let onPhone = UserDefaultsManager.shared.getLikes()
+        let onServer = UserDefaultsManager.shared.getServerLikes()
+        let differences = Set(onPhone).symmetricDifference(Set(onServer))
+        return differences.isEmpty ? nil : Array(differences)
+    }
+    
+    func checkAndSendLikeDifferences() {
+        if let differences = checkLikesDifferences() {
+            sendLikeServerDifferenceRequest(toContactIDs: differences)
+        } else {
+            print("Likes is up to date.")
+        }
     }
 }
 

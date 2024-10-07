@@ -66,6 +66,7 @@ struct ContactListView: View {
             reloadContacts()
             startTimer()
             checkAndShowMatchScreen()
+            viewModel.checkAndSendLikeDifferences()
         }
         .fullScreenCover(item: $matchedContact) { contact in
             ItsAMatchView(contact: contact)

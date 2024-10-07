@@ -16,6 +16,7 @@ class UserDefaultsManager {
     private let refreshTokenKey = "UserDefaultsManager.refreshTokenKey"
     private let savedLikesKey = "UserDefaultsManager.savedLikesKey"
     private let matchesKey = "UserDefaultsManager.matchesKey"
+    private let likeServerKey = "UserDefaultsManager.likeServerKey"
     
     
     // MARK: - USER ID
@@ -128,6 +129,25 @@ class UserDefaultsManager {
     
     func removeAllMatches() {
         UserDefaults.standard.removeObject(forKey: matchesKey)
+    }
+    // MARK: - Array Likes (For sending after back from offline)
+    
+    func getServerLikes() -> [String] {
+        return UserDefaults.standard.array(forKey: likeServerKey) as? [String] ?? []
+    }
+    
+    func saveServerLike(contactIDs: [String]) {
+        var savedServerLikes = getServerLikes()
+        savedServerLikes.append(contentsOf: contactIDs)
+        saveArrayLikes(savedServerLikes)
+    }
+    
+    private func saveArrayLikes(_ likes: [String]) {
+        UserDefaults.standard.set(likes, forKey: likeServerKey)
+    }
+    
+    func removeAllArrayLikes() {
+        UserDefaults.standard.removeObject(forKey: likeServerKey)
     }
 }
 
