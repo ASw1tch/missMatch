@@ -66,26 +66,34 @@ class SignInViewModel: ObservableObject {
             retryCount = 0
         }
         switch error {
-        case .clientError(let statusCode):
-            self.errorMessage = "Authorization failed. Check your credentials. (Error \(statusCode))"
+        case .badRequest:
+            self.errorMessage = error.localizedDescription
             self.showErrorPopup = true
-        case .serverError(let statusCode):
-            if self.retryCount < self.maxRetryCount {
-                showErrorPopup = true
-                errorMessage = "Retrying Authorization"
-                self.retryCount += 1
+            
+        case .invalidToken, .userNotFound:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .internalServerError:
+            if retryCount < maxRetryCount {
+                retryCount += 1
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     self.sendToServer(authorizationCode: authorizationCode)
                 }
             } else {
-                self.errorMessage = "Server not responding. Try again later. (Error \(statusCode))"
+                self.errorMessage = "Error. Please contact support."
                 self.showErrorPopup = true
             }
-        case .custom(let error):
-            self.errorMessage = "Network error: \(error.localizedDescription)"
+        case .tokenRevokeFailed:
+            self.errorMessage = error.localizedDescription
             self.showErrorPopup = true
-        default:
-            self.errorMessage = "Unknown error occurred."
+            
+        case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .customError(let message):
+            self.errorMessage = message
             self.showErrorPopup = true
         }
     }

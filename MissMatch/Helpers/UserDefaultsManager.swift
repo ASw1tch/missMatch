@@ -10,6 +10,24 @@ import Foundation
 class UserDefaultsManager {
     static let shared = UserDefaultsManager()
     
+    func removeAllValues() {
+        let keys = [
+            userIdKey,
+            appleIdKey,
+            contactsKey,
+            refreshTokenKey,
+            savedLikesKey,
+            matchesKey,
+            likeServerKey,
+            userNameKey
+        ]
+        
+        for key in keys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        UserDefaults.standard.synchronize()
+    }
+    
     private let userIdKey = "UserDefaultsManager.userIdKey"
     private let appleIdKey = "UserDefaultsManager.appleIdKey"
     private let contactsKey = "UserDefaultsManager.contactsKey"

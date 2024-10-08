@@ -15,8 +15,8 @@ struct MyOwnNumberView: View {
     
     @State var selectedCountry: Country
     @State var phoneNumber: String
-    @State private var showPreparingView = false  // Флаг для показа промежуточного экрана
-    @State private var shouldNavigateToContacts = false  // Флаг для перехода на ContactListView
+    @State private var showPreparingView = false
+    @State private var shouldNavigateToContacts = false
     
     let countryCodes = countryCodesInstance.sortedCountryCodes()
     
@@ -57,8 +57,6 @@ struct MyOwnNumberView: View {
                     phoneNumber: phoneNumber
                 )
                 hideKeyboard()
-                
-                // Переход на промежуточный экран с загрузкой
                 shouldNavigateToContacts = true
             }) {
                 Text("Continue")
@@ -78,7 +76,7 @@ struct MyOwnNumberView: View {
         .loading(isLoading: $myOwnNumberVM.isLoading)
         .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
         .fullScreenCover(isPresented: $myOwnNumberVM.shouldNavigate) {
-                    ContactListView(viewModel: viewModel)  // Переход на ContactListView
+                    ContactListView(viewModel: viewModel)
         }
     }
 }

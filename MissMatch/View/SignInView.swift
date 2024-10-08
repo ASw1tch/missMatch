@@ -31,7 +31,7 @@ struct SignInView: View {
                     switch result {
                     case .success(let authResults):
                         handleAuthorization(authResults)
-                        if signInVM.shouldNavigate {
+                        if signInVM.shouldNavigate { // Тут Бага
                             isProceed.toggle()
                         }
                     case .failure(let error):

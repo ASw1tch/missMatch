@@ -16,6 +16,9 @@ class MyOwnNumderViewModel: ObservableObject {
     @Published var errorMessage = ""
     @Published var shouldNavigate = false
     
+    private var retryCount = 0
+    private let maxRetryCount = 2
+    
     init() {}
     
     func findContactPhoneNumbers(for phoneNumber: String, completion: @escaping ([String]) -> Void) {
@@ -41,12 +44,13 @@ class MyOwnNumderViewModel: ObservableObject {
             completion([])
         }
     }
-
+    
     
     func handleContinueAction(selectedCountryCode: String?, phoneNumber: String) {
         
         guard let selectedCountryCode = selectedCountryCode else {
-            print("Country code is missing")
+            showErrorPopup = true
+            errorMessage = "Country code is missing."
             return
         }
         
@@ -80,12 +84,13 @@ class MyOwnNumderViewModel: ObservableObject {
             errorMessage = "Can't convert user data to JSON."
             return
         }
+        
         isLoading = true
         let headers: [HTTPHeaderField: String] = [
             .contentType: HTTPHeaderValue.json.rawValue,
             .accept: HTTPHeaderValue.acceptAll.rawValue
         ]
-        print(headers)
+        
         NetworkManager.shared.sendRequest(
             to: API.userApiUrl,
             method: .POST,
@@ -98,15 +103,65 @@ class MyOwnNumderViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     self?.showErrorPopup = true
-                    self?.errorMessage = response.description
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                        self?.shouldNavigate = true
-                    }
+                    self?.errorMessage = "User sent successfully: \(response)"
+                    // DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    self?.shouldNavigate = true
+                    // }
                 case .failure(let error):
-                    self?.showErrorPopup = true
-                    self?.errorMessage = "Error: \(error.localizedDescription)"
+                    self?.handleUserSendingError(error: error, user: user)
                 }
             }
         }
+    }
+    
+    private func handleUserSendingError(error: NetworkError, user: User) {
+        defer {
+            retryCount = 0
+        }
+        switch error {
+        case .badRequest:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .invalidToken, .userNotFound:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            returnBackToBegin()
+            
+        case .tokenRevokeFailed:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .internalServerError:
+            if retryCount < maxRetryCount {
+                retryCount += 1
+                // Логика для повторного запроса через 1 секунду
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    // Повторная отправка запроса
+                }
+            } else {
+                // Ошибка после 3 попыток
+                self.errorMessage = "Error. Please contact support."
+                self.showErrorPopup = true
+            }
+            
+        case .customError(let message):
+            // Обработка кастомной ошибки
+            self.errorMessage = message
+            self.showErrorPopup = true
+        }
+    }
+    
+    private func returnBackToBegin() {
+        print("Deleting all data")
+        UserDefaultsManager.shared.removeAllValues()
+        print("Pre-Navigate")
+            print("Navigate")
+            print("Post-Navigate")
+        
     }
 }
