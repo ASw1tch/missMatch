@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContactListView: View {
-    
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel = ContactListViewModel()
     @State var showMatchView = false
     @State var matchedContact: Contact?
@@ -60,7 +60,7 @@ struct ContactListView: View {
                     }
                     .scrollIndicators(.never)
                 }
-            }
+            }.background(Color(UIColor.systemBackground))
         }
         .onAppear {
             reloadContacts()

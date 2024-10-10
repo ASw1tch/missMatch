@@ -12,7 +12,7 @@ import CryptoKit
 
 struct SignInView: View {
     @Environment(\.colorScheme) var colorScheme
-    
+    @EnvironmentObject var coordinator: AppCoordinator
     @ObservedObject var signInVM: SignInViewModel
     
     @State private var currentNonce: String?
@@ -31,22 +31,29 @@ struct SignInView: View {
                     switch result {
                     case .success(let authResults):
                         handleAuthorization(authResults)
-                        if signInVM.shouldNavigate { // Тут Бага
-                            isProceed.toggle()
-                        }
                     case .failure(let error):
                         print("Authorization failed: \(error.localizedDescription)")
                     }
                 }
             )
+            
             .shadow(color: colorScheme == .dark ? Color.white.opacity(0.5) : Color.gray, radius: 3, x: 0, y: 2)
             .signInWithAppleButtonStyle(
                 colorScheme == .dark ? .white : .black
             )
-            .fullScreenCover(isPresented: $isProceed) {
-                MyOwnNumberView(viewModel: ContactListViewModel(),
-                                myOwnNumberVM: MyOwnNumderViewModel(), selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
-                                phoneNumber: "")
+            .onReceive(signInVM.$shouldNavigate) { shouldNavigate in
+                if shouldNavigate {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        coordinator.currentView = .myNumber
+                    }
+                }
+            }
+            .onReceive(signInVM.$navigateToStart) { navigateToStart in
+                if navigateToStart {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        coordinator.handleFailure()
+                    }
+                }
             }
             .frame(height: 45)
             .padding()

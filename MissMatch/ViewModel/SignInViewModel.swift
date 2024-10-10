@@ -6,14 +6,18 @@
 //
 
 import Foundation
+import SwiftUI
 
 class SignInViewModel: ObservableObject {
+    
+    @EnvironmentObject var coordinator: AppCoordinator
     
     @Published var contacts: [ContactList] = []
     @Published var isLoading = false
     @Published var showErrorPopup = false
     @Published var errorMessage = ""
     @Published var shouldNavigate = false
+    @Published var navigateToStart = false
     
     private var retryCount = 0
     private let maxRetryCount = 2
@@ -73,6 +77,7 @@ class SignInViewModel: ObservableObject {
         case .invalidToken, .userNotFound:
             self.errorMessage = error.localizedDescription
             self.showErrorPopup = true
+            self.navigateToStart = true
             
         case .internalServerError:
             if retryCount < maxRetryCount {

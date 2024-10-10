@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MyOwnNumberView: View {
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var coordinator: AppCoordinator
     
     @ObservedObject var viewModel: ContactListViewModel
     @ObservedObject var myOwnNumberVM: MyOwnNumderViewModel
@@ -57,8 +58,9 @@ struct MyOwnNumberView: View {
                     phoneNumber: phoneNumber
                 )
                 hideKeyboard()
-                shouldNavigateToContacts = true
-            }) {
+                
+            })
+            {
                 Text("Continue")
                     .padding()
                     .frame(maxWidth: .infinity)
@@ -68,6 +70,20 @@ struct MyOwnNumberView: View {
             }
             .padding()
             .disabled(phoneNumber.isEmpty)
+            .onReceive(myOwnNumberVM.$shouldNavigate) { shouldNavigate in
+                if shouldNavigate {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        coordinator.currentView = .contactList
+                    }
+                }
+            }
+            .onReceive(myOwnNumberVM.$navigateToStart) { navigateToStart in
+                if navigateToStart {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        coordinator.handleFailure()
+                    }
+                }
+            }
         }
         .onTapGesture {
             hideKeyboard()
@@ -75,9 +91,6 @@ struct MyOwnNumberView: View {
         .padding()
         .loading(isLoading: $myOwnNumberVM.isLoading)
         .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
-        .fullScreenCover(isPresented: $myOwnNumberVM.shouldNavigate) {
-                    ContactListView(viewModel: viewModel)
-        }
     }
 }
 

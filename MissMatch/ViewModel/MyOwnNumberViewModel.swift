@@ -15,6 +15,7 @@ class MyOwnNumderViewModel: ObservableObject {
     @Published var showErrorPopup = false
     @Published var errorMessage = ""
     @Published var shouldNavigate = false
+    @Published var navigateToStart = false
     
     private var retryCount = 0
     private let maxRetryCount = 2
@@ -104,9 +105,7 @@ class MyOwnNumderViewModel: ObservableObject {
                 case .success(let response):
                     self?.showErrorPopup = true
                     self?.errorMessage = "User sent successfully: \(response)"
-                    // DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                     self?.shouldNavigate = true
-                    // }
                 case .failure(let error):
                     self?.handleUserSendingError(error: error, user: user)
                 }
@@ -126,7 +125,7 @@ class MyOwnNumderViewModel: ObservableObject {
         case .invalidToken, .userNotFound:
             self.errorMessage = error.localizedDescription
             self.showErrorPopup = true
-            returnBackToBegin()
+            self.navigateToStart = true
             
         case .tokenRevokeFailed:
             self.errorMessage = error.localizedDescription
@@ -141,7 +140,7 @@ class MyOwnNumderViewModel: ObservableObject {
                 retryCount += 1
                 // Логика для повторного запроса через 1 секунду
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    // Повторная отправка запроса
+                    self.sendUserToServer(user: user)
                 }
             } else {
                 // Ошибка после 3 попыток
@@ -154,14 +153,5 @@ class MyOwnNumderViewModel: ObservableObject {
             self.errorMessage = message
             self.showErrorPopup = true
         }
-    }
-    
-    private func returnBackToBegin() {
-        print("Deleting all data")
-        UserDefaultsManager.shared.removeAllValues()
-        print("Pre-Navigate")
-            print("Navigate")
-            print("Post-Navigate")
-        
     }
 }

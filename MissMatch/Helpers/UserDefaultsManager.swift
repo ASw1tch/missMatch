@@ -10,7 +10,7 @@ import Foundation
 class UserDefaultsManager {
     static let shared = UserDefaultsManager()
     
-    func removeAllValues() {
+    func resetAllValues() {
         let keys = [
             userIdKey,
             appleIdKey,
