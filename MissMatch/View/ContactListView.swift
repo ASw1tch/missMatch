@@ -25,17 +25,6 @@ struct ContactListView: View {
                         ProgressView("Loading contacts...")
                             .padding()
                     }
-                } else if viewModel.showErrorPopup {
-                    VStack {
-                        Text("Error: \(errorMessage)")
-                            .foregroundColor(.red)
-                        Button(action: {
-                            reloadContacts()
-                        }) {
-                            Text("Retry")
-                        }
-                        .padding()
-                    }
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 10) {
@@ -63,16 +52,19 @@ struct ContactListView: View {
             }.background(Color(UIColor.systemBackground))
         }
         .onAppear {
+            print("OnAppear")
             reloadContacts()
             startTimer()
             checkAndShowMatchScreen()
-            viewModel.checkAndSendLikeDifferences()
         }
         .fullScreenCover(item: $matchedContact) { contact in
             ItsAMatchView(contact: contact)
         }
         .onDisappear {
+            print("OnDisappear")
             viewModel.stopRegularUpdates()
+            viewModel.maxRetryContactListCount = 0
+            viewModel.maxRetryMatchesCount = 0
         }
     }
     

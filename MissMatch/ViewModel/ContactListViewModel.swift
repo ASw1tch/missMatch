@@ -16,6 +16,17 @@ class ContactListViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showErrorPopup = false
     @Published var errorMessage = ""
+    @Published var navigateToStart = false
+
+    private var retryCount = 0
+    var maxRetryContactListCount = 3
+    var maxRetryMatchesCount = 3
+    
+    init() {
+        maxRetryContactListCount = 0
+        maxRetryContactListCount = 0
+    }
+    
     
     func fetchContacts(completion: @escaping (ContactList) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
@@ -75,6 +86,7 @@ class ContactListViewModel: ObservableObject {
     }
     
     func sendContactsToServer(contactList: ContactList) {
+        
         guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
             showErrorPopup = true
             errorMessage = "Apple ID is not found."
@@ -111,16 +123,63 @@ class ContactListViewModel: ObservableObject {
                         for contact in response.contacts {
                             UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones)
                         }
-                    } else {
-                        self.showErrorPopup = true
-                        self.errorMessage = "Server responded with an error: \(response.message)"
-                        print("Server error: \(response.message)")
                     }
                 case .failure(let error):
-                    self.showErrorPopup = true
-                    self.errorMessage = "Error: \(error.localizedDescription)"
-                    print("Request failed: \(error)")
+                    print("Network error: \(error.localizedDescription)")
+                    self.handleUserSendingError(error: error, contactList: contactList)
                 }
+            }
+        }
+    }
+    
+    private func handleUserSendingError(error: NetworkError, contactList: ContactList) {
+        switch error {
+        case .badRequest:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .invalidToken, .userNotFound:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            self.navigateToStart = true
+            
+        case .tokenRevokeFailed:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .internalServerError:
+            if retryCount < maxRetryContactListCount {
+                retryCount += 1
+                print("Rertying Contacts")
+                self.errorMessage = "Rertying Contacts"
+                self.showErrorPopup = true
+                // Логика для повторного запроса через 1 секунду
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.sendContactsToServer(contactList: contactList)
+                }
+            } else {
+                // Ошибка после 3 попыток
+                self.errorMessage = "Something goes wrong. Try Again later."
+                self.showErrorPopup = true
+            }
+            
+        case .customError(let message):
+            if retryCount < maxRetryContactListCount {
+                retryCount += 1
+                print("Rertying Contacts")
+                self.errorMessage = "Rertying Contacts"
+                self.showErrorPopup = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.sendContactsToServer(contactList: contactList)
+                }
+            } else {
+                print("Custom Error")
+                self.errorMessage = "Something goes wrong! Try Again later!"
+                self.showErrorPopup = true
             }
         }
     }
@@ -205,16 +264,69 @@ class ContactListViewModel: ObservableObject {
                     //print(UserDefaultsManager.shared.getMatches())
                     let shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
                     let newMatchID = response.contactIDS.first(where: { !shownMatches.contains($0) })
-                    
                     completion(newMatchID) 
                 case .failure(let error):
-                    self.showErrorPopup = true
-                    self.errorMessage = "Error: \(error.localizedDescription)"
-                    print("Request failed: \(error)")
+                    self.handleUserSendingMatchesError(error: error) {
+                        self.getMatches(completion: completion)
+                    }
                 }
             }
         }
     }
+    
+    private func handleUserSendingMatchesError(error: NetworkError, retryAction: @escaping () -> Void) {
+        
+        switch error {
+        case .badRequest:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .invalidToken, .userNotFound:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            self.navigateToStart = true
+            
+        case .tokenRevokeFailed:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .internalServerError:
+            if retryCount < maxRetryMatchesCount {
+                retryCount += 1
+                print("Rertying Matches")
+                self.errorMessage = "Rertying Matches"
+                self.showErrorPopup = true
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    retryAction()
+                }
+            } else {
+                self.errorMessage = "Matches currently unavailable"
+                self.showErrorPopup = true
+            }
+            
+        case .customError(let message):
+            if retryCount < maxRetryMatchesCount {
+                retryCount += 1
+                print("Rertying Matches")
+                self.errorMessage = "Rertying Matches"
+                self.showErrorPopup = true
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    retryAction()
+                }
+            } else {
+                print("Custom Error")
+                self.errorMessage = "Something goes wrong! Try Again later!"
+                self.showErrorPopup = true
+            }
+        }
+    }
+
     
     private var timer: Timer?
     
@@ -233,6 +345,7 @@ class ContactListViewModel: ObservableObject {
                     }
                 }
             }
+            self?.checkAndSendLikeDifferences()
         }
     }
     
@@ -245,14 +358,22 @@ class ContactListViewModel: ObservableObject {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "matchNotification", content: content, trigger: trigger)
         
-        UNUserNotificationCenter.current().add(request) { (error) in
+        UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Error scheduling notification: \(error.localizedDescription)")
+                print("Failed to schedule notification: \(error.localizedDescription)")
             } else {
-                print("Notification successfully scheduled!")
+                // Если приложение активно, покажи нотификацию вручную
+                DispatchQueue.main.async {
+                    if UIApplication.shared.applicationState == .active {
+                        self.errorMessage = "You have a new Match"
+                        self.showErrorPopup = true
+                    }
+                }
             }
         }
     }
+    
+    
     func stopRegularUpdates() {
         timer?.invalidate()
         timer = nil
@@ -282,8 +403,9 @@ class ContactListViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     if response.success {
+                        UserDefaultsManager.shared.removeAllServerLikes()
                         UserDefaultsManager.shared.saveServerLike(contactIDs: response.likes)
-                        print(UserDefaultsManager.shared.getServerLikes())
+                        print("Server likes: \(UserDefaultsManager.shared.getServerLikes())")
                     } else {
                         print("Server error: \(response.message)")
                     }
@@ -303,6 +425,7 @@ class ContactListViewModel: ObservableObject {
     
     func checkAndSendLikeDifferences() {
         if let differences = checkLikesDifferences() {
+            print("Likes are different, sending difference.")
             sendLikeServerDifferenceRequest(toContactIDs: differences)
         } else {
             print("Likes is up to date.")

@@ -28,14 +28,20 @@ struct ResponseHandler {
         
         switch statusCode {
         case 200...299:
-            // Успешный ответ
             guard let data = data else {
                 return .failure(.customError("No data received."))
             }
-            
             do {
-                let decodedData = try JSONDecoder().decode(T.self, from: data)
-                return .success(decodedData)
+                if T.self == String.self {
+                    if let responseString = String(data: data, encoding: .utf8) as? T {
+                        return .success(responseString)
+                    } else {
+                        return .failure(.customError("Failed to convert response to String."))
+                    }
+                } else {
+                    let decodedData = try JSONDecoder().decode(T.self, from: data)
+                    return .success(decodedData)
+                }
             } catch {
                 return .failure(.customError("Failed to decode response."))
             }

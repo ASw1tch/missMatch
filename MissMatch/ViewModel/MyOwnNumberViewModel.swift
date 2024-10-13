@@ -103,10 +103,12 @@ class MyOwnNumderViewModel: ObservableObject {
                 self?.isLoading = false
                 switch result {
                 case .success(let response):
+                    print("Response: \(response)")
                     self?.showErrorPopup = true
                     self?.errorMessage = "User sent successfully: \(response)"
                     self?.shouldNavigate = true
                 case .failure(let error):
+                    print("Network error: \(error.localizedDescription)")
                     self?.handleUserSendingError(error: error, user: user)
                 }
             }
@@ -149,7 +151,7 @@ class MyOwnNumderViewModel: ObservableObject {
             }
             
         case .customError(let message):
-            // Обработка кастомной ошибки
+            print("Custom Error")
             self.errorMessage = message
             self.showErrorPopup = true
         }

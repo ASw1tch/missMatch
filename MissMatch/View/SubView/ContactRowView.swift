@@ -104,7 +104,7 @@ struct ContactRowView: View {
                 case .success(let response):
                     if response.success {
                         print("Response: \(response.likes)")
-                        print(UserDefaultsManager.shared.getLikes())
+                        print("Get Likes: \(UserDefaultsManager.shared.getLikes())")
                     } else {
                         print("Server error: \(response.message)")
                     }

@@ -24,7 +24,7 @@ struct MyApp: App {
                     MyOwnNumberView(
                         viewModel: ContactListViewModel(),
                         myOwnNumberVM: MyOwnNumderViewModel(),
-                        selectedCountry: Country(flag: "🇹🇻", code: "+688", name: "Tuvalu"),
+                        selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
                         phoneNumber: "9312444263"
                     )
                 case .contactList:

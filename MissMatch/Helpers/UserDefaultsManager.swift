@@ -165,7 +165,7 @@ class UserDefaultsManager {
         UserDefaults.standard.set(likes, forKey: likeServerKey)
     }
     
-    func removeAllArrayLikes() {
+    func removeAllServerLikes() {
         UserDefaults.standard.removeObject(forKey: likeServerKey)
     }
     
