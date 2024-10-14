@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContactListView: View {
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var coordinator: AppCoordinator
+    
     @ObservedObject var viewModel = ContactListViewModel()
     @State var showMatchView = false
     @State var matchedContact: Contact?
@@ -32,6 +34,10 @@ struct ContactListView: View {
                                 .font(.largeTitle)
                                 .bold()
                                 .padding()
+            
+                            Button("Go to Match Screen") {
+                                coordinator.showMatchScreen(for: Contact(identifier: "1", givenName: "Test", familyName: "User", phoneNumbers: []))
+                            }
                             
                             ForEach($viewModel.contacts.sorted(by: {
                                 ($0.givenName.wrappedValue ?? "") < ($1.givenName.wrappedValue ?? "")
@@ -57,11 +63,7 @@ struct ContactListView: View {
             startTimer()
             checkAndShowMatchScreen()
         }
-        .fullScreenCover(item: $matchedContact) { contact in
-            ItsAMatchView(contact: contact)
-        }
         .onDisappear {
-            print("OnDisappear")
             viewModel.stopRegularUpdates()
             viewModel.maxRetryContactListCount = 0
             viewModel.maxRetryMatchesCount = 0
@@ -83,21 +85,23 @@ struct ContactListView: View {
     }
     
     func checkAndShowMatchScreen() {
+        print("Application state: \(UIApplication.shared.applicationState)")
         viewModel.getMatches { newMatchID in
             guard let matchID = newMatchID else { return }
             
             if let matchedContact = viewModel.contacts.first(where: { $0.identifier == matchID }) {
-                // Показ экрана мэтча
-                self.matchedContact = matchedContact
-                self.showMatchView = true
                 
-                // Отправка уведомления
-                viewModel.scheduleLocalNotification(contact: matchedContact)
-                
-                // Обновление показанных мэтчей
-                var shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
-                shownMatches.append(matchID)
-                UserDefaults.standard.set(shownMatches, forKey: "shownMatches")
+                if UIApplication.shared.applicationState == .active {
+                    print("App is active, showing match view.")
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut) {
+                            coordinator.showMatchScreen(for: matchedContact)
+                        }
+                    }
+                } else {
+                    
+                    viewModel.scheduleLocalNotification(contact: matchedContact)
+                }
             }
         }
     }

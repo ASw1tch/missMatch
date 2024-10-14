@@ -9,6 +9,8 @@ import Foundation
 
 class AppCoordinator: ObservableObject {
     @Published var currentView: AppView = .splashScreen
+    @Published var matchesQueue: [Contact] = []
+    @Published var matchedContact: Contact? = nil
     
     func showSplash() {
         currentView = .splashScreen
@@ -18,6 +20,35 @@ class AppCoordinator: ObservableObject {
         currentView = .signIn
     }
     
+    func showMatchScreen(for contact: Contact) {
+        DispatchQueue.main.async {
+            self.matchesQueue.append(contact)
+            self.processNextMatch()
+        }
+    }
+    
+    func processNextMatch() {
+        if let nextMatch = self.matchesQueue.first {
+            self.matchedContact = nextMatch
+            self.currentView = .itsAMatch 
+        }
+    }
+    
+    func dismissMatchScreen() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if !self.matchesQueue.isEmpty {
+               
+                self.matchesQueue.removeFirst()
+            }
+            self.matchedContact = nil
+            self.currentView = .contactList
+    
+            if !self.matchesQueue.isEmpty {
+                self.processNextMatch()
+            }
+        }
+    }
+        
     func handleFailure() {
         UserDefaultsManager.shared.resetAllValues()
         showSignIn()
@@ -30,4 +61,5 @@ enum AppView {
     case signIn
     case myNumber
     case contactList
+    case itsAMatch 
 }

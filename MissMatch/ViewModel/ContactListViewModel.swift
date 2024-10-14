@@ -11,7 +11,7 @@ import SwiftUI
 import UserNotifications
 
 class ContactListViewModel: ObservableObject {
-    
+    @EnvironmentObject var coordinator: AppCoordinator
     @Published var contacts: [Contact] = []
     @Published var isLoading = false
     @Published var showErrorPopup = false
@@ -167,7 +167,7 @@ class ContactListViewModel: ObservableObject {
                 self.showErrorPopup = true
             }
             
-        case .customError(let message):
+        case .customError:
             if retryCount < maxRetryContactListCount {
                 retryCount += 1
                 print("Rertying Contacts")
@@ -255,16 +255,21 @@ class ContactListViewModel: ObservableObject {
             body: nil,
             responseType: MatchResponse.self
         ) { result in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [self] in
                 switch result {
                 case .success(let response):
-                    //print("Matches received: \(response.contactIDS)")
-                    UserDefaultsManager.shared.removeAllMatches()
-                    UserDefaultsManager.shared.saveMatches(response)
-                    //print(UserDefaultsManager.shared.getMatches())
-                    let shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
-                    let newMatchID = response.contactIDS.first(where: { !shownMatches.contains($0) })
-                    completion(newMatchID) 
+                    print("Matches received from server: \(response.contactIDS)")
+                    
+                    // Добавляем каждый матч в очередь
+                    for matchID in response.contactIDS {
+                        if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
+                            // Добавляем матч в очередь координатора
+                            coordinator.matchesQueue.append(matchedContact)
+                            print("Added match to queue: \(matchedContact.givenName ?? "") \(matchedContact.familyName ?? "")")
+                        }
+                    }
+                    
+                    completion(response.contactIDS.first)
                 case .failure(let error):
                     self.handleUserSendingMatchesError(error: error) {
                         self.getMatches(completion: completion)
@@ -309,7 +314,7 @@ class ContactListViewModel: ObservableObject {
                 self.showErrorPopup = true
             }
             
-        case .customError(let message):
+        case .customError:
             if retryCount < maxRetryMatchesCount {
                 retryCount += 1
                 print("Rertying Matches")
@@ -345,7 +350,7 @@ class ContactListViewModel: ObservableObject {
                     }
                 }
             }
-            self?.checkAndSendLikeDifferences()
+            //self?.checkAndSendLikeDifferences()
         }
     }
     

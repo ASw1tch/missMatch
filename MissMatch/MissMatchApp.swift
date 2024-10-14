@@ -13,23 +13,36 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                switch coordinator.currentView {
-                case .splashScreen:
-                    SplashScreenView()
-                case .signIn:
-                    SignInView(signInVM: SignInViewModel())
-                case .contactPermisson:
-                    ContactPermissonView()
-                case .myNumber:
-                    MyOwnNumberView(
-                        viewModel: ContactListViewModel(),
-                        myOwnNumberVM: MyOwnNumderViewModel(),
-                        selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
-                        phoneNumber: "9312444263"
-                    )
-                case .contactList:
-                    ContactListView()
+                ZStack {
+                    switch coordinator.currentView {
+                    case .splashScreen:
+                        SplashScreenView()
+                            .transition(.opacity)
+                    case .signIn:
+                        SignInView(signInVM: SignInViewModel())
+                            .transition(.slide)
+                    case .contactPermisson:
+                        ContactPermissonView()
+                            .transition(.slide)
+                    case .myNumber:
+                        MyOwnNumberView(
+                            viewModel: ContactListViewModel(),
+                            myOwnNumberVM: MyOwnNumderViewModel(),
+                            selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
+                            phoneNumber: "9312444263"
+                        )
+                        .transition(.slide)
+                    case .contactList:
+                        ContactListView()
+                            .transition(.slide)
+                    case .itsAMatch:
+                        if let contact = coordinator.matchedContact {
+                            ItsAMatchView(contact: contact)
+                                .transition(.slide)
+                        }
+                    }
                 }
+                .animation(.easeInOut, value: coordinator.currentView) 
             }
             .environmentObject(coordinator)
         }
