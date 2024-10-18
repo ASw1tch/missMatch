@@ -5,6 +5,7 @@
 //  Created by Anatoliy Petrov on 25.7.24..
 //
 
+
 import SwiftUI
 
 struct ContactListView: View {
@@ -18,55 +19,112 @@ struct ContactListView: View {
     @State private var isLoading = false
     @State private var showErrorPopup = false
     @State private var errorMessage = ""
+    @State private var searchText = ""
+    
+    var filteredContacts: [Contact] {
+        if searchText.isEmpty {
+            return viewModel.contacts
+        } else {
+            return viewModel.contacts.filter { contact in
+                contact.givenName?.lowercased().contains(searchText.lowercased()) ?? false ||
+                contact.familyName?.lowercased().contains(searchText.lowercased()) ?? false
+            }
+        }
+    }
+    
+    var likedContacts: [Contact] {
+        filteredContacts.filter { $0.iLiked }
+    }
+    
+    var groupedContacts: [String: [Contact]] {
+        Dictionary(grouping: filteredContacts) { contact in
+            String(contact.givenName!.prefix(1)).uppercased()
+        }
+    }
+    
+    var sectionTitles: [String] {
+        groupedContacts.keys.sorted()
+    }
+
     
     var body: some View {
         NavigationStack {
-            VStack {
-                if viewModel.isLoading {
-                    VStack {
-                        ProgressView("Loading contacts...")
-                            .padding()
-                    }
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("I miss...")
-                                .font(.largeTitle)
-                                .bold()
+            ZStack {
+                Color(colorScheme == .dark ? Color.black : Color.white).ignoresSafeArea()
+                VStack {
+                    if viewModel.isLoading {
+                        VStack {
+                            ProgressView("Loading contacts...")
                                 .padding()
-            
-                            Button("Go to Match Screen") {
-                                coordinator.showMatchScreen(for: Contact(identifier: "1", givenName: "Test", familyName: "User", phoneNumbers: []))
-                            }
-                            
-                            ForEach($viewModel.contacts.sorted(by: {
-                                ($0.givenName.wrappedValue ?? "") < ($1.givenName.wrappedValue ?? "")
-                            })) { $contact in
-                                ContactRowView(contact: $contact, viewModel: viewModel)
-                            }
-                            .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                                content
-                                    .opacity(phase.isIdentity ? 1 : 0)
-                                    .scaleEffect(phase.isIdentity ? 1 : 0.75)
-                                    .blur(radius: phase.isIdentity ? 0 : 10)
-                            }
                         }
-                        .padding()
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("I miss:")
+                                    .font(.largeTitle)
+                                    .bold()
+                                TextField("Search contacts", text: $searchText)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .padding(.vertical, 10)
+                                
+                                if !likedContacts.isEmpty {
+                                    Section(header: Text("Liked Contacts")
+                                        .font(.headline)
+                                        .foregroundColor(.red)) {
+                                            ForEach(likedContacts) { contact in
+                                                ContactRowView(contact: Binding(
+                                                    get: { contact },
+                                                    set: { updatedContact in
+                                                        if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
+                                                            viewModel.contacts[index] = updatedContact
+                                                        }
+                                                    }), viewModel: viewModel)
+                                            }
+                                        }
+                                }
+                                
+                                ForEach(groupedContacts.keys.sorted(), id: \.self) { letter in
+                                    Section(header: Text(letter)
+                                        .font(.headline)
+                                        .foregroundColor(Color(hex: "#f8dcdc"))) {
+                                            ForEach(groupedContacts[letter] ?? []) { contact in
+                                                ContactRowView(contact: Binding(
+                                                    get: { contact },
+                                                    set: { updatedContact in
+                                                        if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
+                                                            viewModel.contacts[index] = updatedContact
+                                                        }
+                                                    }), viewModel: viewModel)
+                                            }
+                                        }
+                                }
+                                .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1 : 0.5)
+                                        .scaleEffect(phase.isIdentity ? 1 : 0.85)
+                                        .blur(radius: phase.isIdentity ? 0 : 2)
+                                }
+                            }
+                            .onTapGesture {
+                                dismissKeyboard()
+                            }
+                            .padding()
+                        }
+                        .scrollIndicators(.visible)
                     }
-                    .scrollIndicators(.never)
                 }
-            }.background(Color(UIColor.systemBackground))
-        }
-        .onAppear {
-            print("OnAppear")
-            reloadContacts()
-            startTimer()
-            checkAndShowMatchScreen()
-        }
-        .onDisappear {
-            viewModel.stopRegularUpdates()
-            viewModel.maxRetryContactListCount = 0
-            viewModel.maxRetryMatchesCount = 0
+            }
+            .onAppear {
+                print("OnAppear")
+                reloadContacts()
+                startTimer()
+                checkAndShowMatchScreen()
+            }
+            .onDisappear {
+                viewModel.stopRegularUpdates()
+                viewModel.maxRetryContactListCount = 0
+                viewModel.maxRetryMatchesCount = 0
+            }
         }
     }
     
@@ -104,6 +162,9 @@ struct ContactListView: View {
                 }
             }
         }
+    }
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

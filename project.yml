@@ -13,6 +13,10 @@ packages:
   lottie-ios:
     url: https://github.com/airbnb/lottie-ios
     from: 4.5.0
+    
+     swift-composable-architecture:
+    url: https://github.com/pointfreeco/swift-composable-architecture
+    from: 1.15.0
 
 name: *APP_NAME
 
@@ -57,3 +61,6 @@ targets:
     dependencies:
       - package: lottie-ios
         product: Lottie
+        
+      - package: swift-composable-architecture
+        product: ComposableArchitecture
