@@ -12,7 +12,6 @@ struct ContactRowView: View {
     @Environment(\.colorScheme) var colorScheme
     @Binding var contact: Contact
     @ObservedObject var viewModel: ContactListViewModel
-    
     @State private var showAlert = false
     @State private var showMatchView = false
     @State private var showPaywall = false
@@ -35,8 +34,6 @@ struct ContactRowView: View {
         .background(contactBackground)
         .cornerRadius(8)
         .shadow(color: shadowColor, radius: 3, x: 0, y: 2)
-        .onAppear {
-        }
     }
     
     private var contactInfo: some View {
@@ -62,8 +59,7 @@ struct ContactRowView: View {
     
     private func handleButtonAction() {
         print("Contact is liked: \(contact.iLiked)")
-        contact.iLiked.toggle()
-        if contact.iLiked {
+        if !contact.iLiked {
             if !likesRepository.canLike() {
                 showAlert = true
                 return
@@ -71,11 +67,13 @@ struct ContactRowView: View {
                 print("Contact is liked")
                 UserDefaultsManager.shared.saveLike(contactID: contact.id)
                 sendLikeRequest(contactID: contact.id, remove: false)
+                contact.iLiked.toggle()
             }
         } else {
             print("Contact is unliked")
             UserDefaultsManager.shared.removeLike(contactID: contact.id)
             sendLikeRequest(contactID: contact.id, remove: true)
+            contact.iLiked.toggle()
         }
     }
     
@@ -103,8 +101,8 @@ struct ContactRowView: View {
                 switch result {
                 case .success(let response):
                     if response.success {
-                        print("Response: \(response.likes)")
-                        print("Get Likes: \(UserDefaultsManager.shared.getLikes())")
+                        print("Likes on server: \(response.likes)")
+                        print("Likes on phone: \(UserDefaultsManager.shared.getLikes())")
                     } else {
                         print("Server error: \(response.message)")
                     }
@@ -176,7 +174,7 @@ struct ContactRowView: View {
                 .shadow(radius: 10)
         }
     }
-    
+  
     private var shadowColor: Color {
         colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray
     }

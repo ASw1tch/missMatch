@@ -87,8 +87,8 @@ struct SplashScreenView: View {
     }
     
     private func proceedToNextView() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            withAnimation {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation(.spring(response: 1, dampingFraction: 0.5, blendDuration: 1.5)) {
                 self.isActive = true
             }
         }
