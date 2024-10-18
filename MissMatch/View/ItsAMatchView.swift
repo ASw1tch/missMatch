@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct ItsAMatchView: View {
-    @Environment(\.presentationMode) var presentationMode
-    
+    @EnvironmentObject var coordinator: AppCoordinator
     
     var contact: Contact
     
@@ -29,8 +28,7 @@ struct ItsAMatchView: View {
                     .font(.body)
                     .bold()
                 Button {
-                    
-                    presentationMode.wrappedValue.dismiss()
+                    coordinator.dismissMatchScreen()
                     print("Wow")
                 } label: {
                     Text("Awesome!")

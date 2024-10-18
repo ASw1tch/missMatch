@@ -22,7 +22,7 @@ final class NetworkManager {
         completion: @escaping (Result<T, NetworkError>) -> Void
     ) {
         guard let request = RequestBuilder.buildRequest(urlString: urlString, method: method, headers: headers, body: body) else {
-            completion(.failure(.invalidURL))
+            completion(.failure(.badRequest))
             print("Invalid URL")
             return
         }

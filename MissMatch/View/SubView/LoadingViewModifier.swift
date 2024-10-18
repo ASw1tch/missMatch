@@ -19,7 +19,7 @@ struct LoadingViewModifier: ViewModifier {
                     .progressViewStyle(CircularProgressViewStyle(tint: Color(colorScheme == .dark ? Color.white : Color.black)))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .scaleEffect(3)
-                    .background(Color.black.opacity(0.65).edgesIgnoringSafeArea(.all))
+                    .background(Color.clear.edgesIgnoringSafeArea(.all))
                     .offset(y: 100)
             }
         }

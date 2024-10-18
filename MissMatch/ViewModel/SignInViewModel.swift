@@ -6,16 +6,22 @@
 //
 
 import Foundation
-
+import SwiftUI
 
 class SignInViewModel: ObservableObject {
+    
+    @EnvironmentObject var coordinator: AppCoordinator
     
     @Published var contacts: [ContactList] = []
     @Published var isLoading = false
     @Published var showErrorPopup = false
     @Published var errorMessage = ""
     @Published var shouldNavigate = false
-
+    @Published var navigateToStart = false
+    
+    private var retryCount = 0
+    private let maxRetryCount = 2
+    
     init() {}
     
     func sendToServer(authorizationCode: String) {
@@ -24,7 +30,6 @@ class SignInViewModel: ObservableObject {
             errorMessage = "Apple ID is not found."
             return
         }
-        
         
         guard let requestBody = appleIdUser.data(using: .utf8) else {
             showErrorPopup = true
@@ -50,14 +55,51 @@ class SignInViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     UserDefaultsManager.shared.saveRefreshToken(response.refreshToken)
-                    print(UserDefaultsManager.shared.getRefreshToken() ?? "No token")
+                    self.errorMessage = "Welcome!"
                     self.showErrorPopup = true
-                    self.errorMessage = "ПОЛУЧИЛОСЬ"
+                    self.shouldNavigate = true
                 case .failure(let error):
-                    self.showErrorPopup = true
-                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    self.handleError(error: error, authorizationCode: authorizationCode)
                 }
             }
+        }
+    }
+    
+    private func handleError(error: NetworkError, authorizationCode: String) {
+        defer {
+            retryCount = 0
+        }
+        switch error {
+        case .badRequest:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .invalidToken, .userNotFound:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            self.navigateToStart = true
+            
+        case .internalServerError:
+            if retryCount < maxRetryCount {
+                retryCount += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.sendToServer(authorizationCode: authorizationCode)
+                }
+            } else {
+                self.errorMessage = "Error. Please contact support."
+                self.showErrorPopup = true
+            }
+        case .tokenRevokeFailed:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .customError(let message):
+            self.errorMessage = message
+            self.showErrorPopup = true
         }
     }
 }

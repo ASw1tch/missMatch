@@ -40,7 +40,7 @@ struct ContactPermissonView: View {
             } else {
                 GeometryReader { geometry in
                     ZStack {
-                        Text("Firstly give us permission to use your contacts")
+                        Text("Firstly give us permission to use your contacts and notifications")
                             .font(.title)
                             .foregroundStyle(.secondary)
                             .position(x: geometry.size.width / 2.2 , y: geometry.size.height / 4)

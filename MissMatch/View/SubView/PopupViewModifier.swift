@@ -9,6 +9,8 @@ import SwiftUI
 
 struct PopupViewModifier: ViewModifier {
     @Binding var isShowing: Bool
+    @State private var offset: CGFloat = -200
+    
     var message: String
     var isError: Bool
     
@@ -16,39 +18,39 @@ struct PopupViewModifier: ViewModifier {
         ZStack {
             content
             if isShowing {
-                GeometryReader { geometry in
-                    VStack {
-                        Spacer()
+                VStack {
+                    HStack {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundColor(Color(hex: "FFEB00"))
+                            .imageScale(.large)
                         Text(message)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                VisualEffectBlur(blurStyle: .systemMaterial)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            )
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(isError ? Color.red : Color.green, lineWidth: 2)
-                            )
-                            .padding(.horizontal, 10)
-                            .onTapGesture {
-                                isShowing = false
-                            }
-                            .gesture(
-                                DragGesture().onEnded { value in
-                                    if value.translation.height < 0 {
-                                        isShowing = false
-                                    }
-                                }
-                            )
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                            .animation(.easeInOut(duration: 0.6), value: isShowing)
-                            .frame(width: geometry.size.width)
-                            .position(x: geometry.size.width / 2, y: 80)
+                            .padding(.leading, 5)
+                    }
+                    .padding(10)
+                    .background(Color.gray.opacity(0.6))
+                    .cornerRadius(10)
+                    .shadow(radius: 3, x: 2, y: 2)
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity)
+                    Spacer()
+                }
+                .offset(y: offset)
+                .onAppear {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.3)) {
+                        offset = 0
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        withAnimation {
+                            offset = -200
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            isShowing = false
+                        }
                     }
                 }
-                .edgesIgnoringSafeArea(.all)
+                .animation(.easeInOut, value: isShowing)
             }
         }
     }
@@ -81,7 +83,7 @@ struct PopupViewPreviewContainer: View {
     
     var body: some View {
         VStack {
-            Text("Main Content")
+            Text("Main Content Content Content Content  ")
                 .padding()
             Button(action: {
                 isShowingPopup.toggle()
@@ -93,6 +95,6 @@ struct PopupViewPreviewContainer: View {
                     .cornerRadius(8)
             }
         }
-        .popup(isShowing: $isShowingPopup, message: "This is a glass popup!", isError: false)
+        .popup(isShowing: $isShowingPopup, message: "This is popUp.", isError: false)
     }
 }

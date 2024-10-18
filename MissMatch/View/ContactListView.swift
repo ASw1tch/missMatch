@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContactListView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var coordinator: AppCoordinator
     
     @ObservedObject var viewModel = ContactListViewModel()
     @State var showMatchView = false
@@ -25,17 +27,6 @@ struct ContactListView: View {
                         ProgressView("Loading contacts...")
                             .padding()
                     }
-                } else if viewModel.showErrorPopup {
-                    VStack {
-                        Text("Error: \(errorMessage)")
-                            .foregroundColor(.red)
-                        Button(action: {
-                            reloadContacts()
-                        }) {
-                            Text("Retry")
-                        }
-                        .padding()
-                    }
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 10) {
@@ -43,6 +34,10 @@ struct ContactListView: View {
                                 .font(.largeTitle)
                                 .bold()
                                 .padding()
+            
+                            Button("Go to Match Screen") {
+                                coordinator.showMatchScreen(for: Contact(identifier: "1", givenName: "Test", familyName: "User", phoneNumbers: []))
+                            }
                             
                             ForEach($viewModel.contacts.sorted(by: {
                                 ($0.givenName.wrappedValue ?? "") < ($1.givenName.wrappedValue ?? "")
@@ -60,18 +55,18 @@ struct ContactListView: View {
                     }
                     .scrollIndicators(.never)
                 }
-            }
+            }.background(Color(UIColor.systemBackground))
         }
         .onAppear {
+            print("OnAppear")
             reloadContacts()
             startTimer()
             checkAndShowMatchScreen()
         }
-        .fullScreenCover(item: $matchedContact) { contact in
-            ItsAMatchView(contact: contact)
-        }
         .onDisappear {
             viewModel.stopRegularUpdates()
+            viewModel.maxRetryContactListCount = 0
+            viewModel.maxRetryMatchesCount = 0
         }
     }
     
@@ -90,21 +85,23 @@ struct ContactListView: View {
     }
     
     func checkAndShowMatchScreen() {
+        print("Application state: \(UIApplication.shared.applicationState)")
         viewModel.getMatches { newMatchID in
             guard let matchID = newMatchID else { return }
             
             if let matchedContact = viewModel.contacts.first(where: { $0.identifier == matchID }) {
-                // Показ экрана мэтча
-                self.matchedContact = matchedContact
-                self.showMatchView = true
                 
-                // Отправка уведомления
-                viewModel.scheduleLocalNotification(contact: matchedContact)
-                
-                // Обновление показанных мэтчей
-                var shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
-                shownMatches.append(matchID)
-                UserDefaults.standard.set(shownMatches, forKey: "shownMatches")
+                if UIApplication.shared.applicationState == .active {
+                    print("App is active, showing match view.")
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut) {
+                            coordinator.showMatchScreen(for: matchedContact)
+                        }
+                    }
+                } else {
+                    
+                    viewModel.scheduleLocalNotification(contact: matchedContact)
+                }
             }
         }
     }

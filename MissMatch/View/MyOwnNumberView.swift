@@ -9,14 +9,15 @@ import SwiftUI
 
 struct MyOwnNumberView: View {
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var coordinator: AppCoordinator
     
     @ObservedObject var viewModel: ContactListViewModel
     @ObservedObject var myOwnNumberVM: MyOwnNumderViewModel
     
     @State var selectedCountry: Country
     @State var phoneNumber: String
-    @State private var showPreparingView = false  // Флаг для показа промежуточного экрана
-    @State private var shouldNavigateToContacts = false  // Флаг для перехода на ContactListView
+    @State private var showPreparingView = false
+    @State private var shouldNavigateToContacts = false
     
     let countryCodes = countryCodesInstance.sortedCountryCodes()
     
@@ -58,9 +59,8 @@ struct MyOwnNumberView: View {
                 )
                 hideKeyboard()
                 
-                // Переход на промежуточный экран с загрузкой
-                shouldNavigateToContacts = true
-            }) {
+            })
+            {
                 Text("Continue")
                     .padding()
                     .frame(maxWidth: .infinity)
@@ -70,6 +70,20 @@ struct MyOwnNumberView: View {
             }
             .padding()
             .disabled(phoneNumber.isEmpty)
+            .onReceive(myOwnNumberVM.$shouldNavigate) { shouldNavigate in
+                if shouldNavigate {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        coordinator.currentView = .contactList
+                    }
+                }
+            }
+            .onReceive(myOwnNumberVM.$navigateToStart) { navigateToStart in
+                if navigateToStart {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        coordinator.handleFailure()
+                    }
+                }
+            }
         }
         .onTapGesture {
             hideKeyboard()
@@ -77,9 +91,6 @@ struct MyOwnNumberView: View {
         .padding()
         .loading(isLoading: $myOwnNumberVM.isLoading)
         .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
-        .fullScreenCover(isPresented: $myOwnNumberVM.shouldNavigate) {
-                    ContactListView(viewModel: viewModel)  // Переход на ContactListView
-        }
     }
 }
 

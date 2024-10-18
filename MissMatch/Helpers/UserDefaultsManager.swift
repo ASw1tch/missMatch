@@ -10,12 +10,32 @@ import Foundation
 class UserDefaultsManager {
     static let shared = UserDefaultsManager()
     
+    func resetAllValues() {
+        let keys = [
+            userIdKey,
+            appleIdKey,
+            contactsKey,
+            refreshTokenKey,
+            savedLikesKey,
+            matchesKey,
+            likeServerKey,
+            userNameKey
+        ]
+        
+        for key in keys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        UserDefaults.standard.synchronize()
+    }
+    
     private let userIdKey = "UserDefaultsManager.userIdKey"
     private let appleIdKey = "UserDefaultsManager.appleIdKey"
     private let contactsKey = "UserDefaultsManager.contactsKey"
     private let refreshTokenKey = "UserDefaultsManager.refreshTokenKey"
     private let savedLikesKey = "UserDefaultsManager.savedLikesKey"
     private let matchesKey = "UserDefaultsManager.matchesKey"
+    private let likeServerKey = "UserDefaultsManager.likeServerKey"
+    private let userNameKey = "UserDefaultsManager.userNameKey"
     
     
     // MARK: - USER ID
@@ -128,6 +148,39 @@ class UserDefaultsManager {
     
     func removeAllMatches() {
         UserDefaults.standard.removeObject(forKey: matchesKey)
+    }
+    // MARK: - Array Likes (For sending after back from offline)
+    
+    func getServerLikes() -> [String] {
+        return UserDefaults.standard.array(forKey: likeServerKey) as? [String] ?? []
+    }
+    
+    func saveServerLike(contactIDs: [String]) {
+        var savedServerLikes = getServerLikes()
+        savedServerLikes.append(contentsOf: contactIDs)
+        saveArrayLikes(savedServerLikes)
+    }
+    
+    private func saveArrayLikes(_ likes: [String]) {
+        UserDefaults.standard.set(likes, forKey: likeServerKey)
+    }
+    
+    func removeAllServerLikes() {
+        UserDefaults.standard.removeObject(forKey: likeServerKey)
+    }
+    
+    // MARK: - User Name
+    
+    func saveUserName(_ userName: String) {
+        UserDefaults.standard.set(userName, forKey: userNameKey)
+    }
+    
+    func getUserName() -> String? {
+        return UserDefaults.standard.string(forKey: userNameKey)
+    }
+    
+    func removeUserName() {
+        UserDefaults.standard.removeObject(forKey: userNameKey)
     }
 }
 
