@@ -30,26 +30,25 @@ class AppCoordinator: ObservableObject {
     func processNextMatch() {
         if let nextMatch = self.matchesQueue.first {
             self.matchedContact = nextMatch
-            self.currentView = .itsAMatch 
+            self.currentView = .itsAMatch
         }
     }
     
     func dismissMatchScreen() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if !self.matchesQueue.isEmpty {
-               
-                self.matchesQueue.removeFirst()
-            }
-            self.matchedContact = nil
-            self.currentView = .contactList
-    
-            if !self.matchesQueue.isEmpty {
+        if !self.matchesQueue.isEmpty {
+            self.matchesQueue.removeFirst()
+        }
+        self.matchedContact = nil
+        self.currentView = .contactList
+        
+        if !self.matchesQueue.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 self.processNextMatch()
             }
         }
     }
-        
-    func handleFailure() {
+    
+    func signOutAndReturnToStart() {
         UserDefaultsManager.shared.resetAllValues()
         showSignIn()
     }
@@ -61,5 +60,5 @@ enum AppView {
     case signIn
     case myNumber
     case contactList
-    case itsAMatch 
+    case itsAMatch
 }
