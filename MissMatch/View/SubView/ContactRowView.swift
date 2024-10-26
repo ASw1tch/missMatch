@@ -34,6 +34,11 @@ struct ContactRowView: View {
         .background(contactBackground)
         .cornerRadius(8)
         .shadow(color: shadowColor, radius: 3, x: 0, y: 2)
+        .onTapGesture {
+            if heartState == .matched {
+                openMessagesApp()
+            }
+        }
     }
     
     private var contactInfo: some View {
@@ -54,6 +59,12 @@ struct ContactRowView: View {
         }
         .fullScreenCover(isPresented: $showPaywall) {
             PayWallView()
+        }
+    }
+    
+    private func openMessagesApp() {
+        if let phoneNumber = contact.phoneNumbers.first, let url = URL(string: "sms:\(phoneNumber)"), UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
         }
     }
     
@@ -120,7 +131,7 @@ struct ContactRowView: View {
         case .liked:
             return "heart.fill"
         case .matched:
-            return "checkmark.message.fill"
+            return " "
         }
     }
     
@@ -156,25 +167,29 @@ struct ContactRowView: View {
     
     @ViewBuilder
     private var heartsOverlay: some View {
+        
         ZStack {
             Image(systemName: "heart.fill")
                 .resizable()
                 .foregroundStyle(Color(hex: "FFC7ED"))
-                .frame(width: 60, height: 60)
-                .position(x: 190, y: 35)
+                .frame(width: 50, height: 50)
+                .position(x: 330, y: 63)
                 .rotationEffect(.degrees(-15))
                 .blur(radius: 1.5)
-            
+            Text("Press to text")
+                .font(.caption)
+                .foregroundStyle(.gray)
+                .opacity(0.5)
             Image(systemName: "heart")
                 .resizable()
                 .foregroundStyle(Color(hex: "7D8ABC"))
                 .frame(width: 30, height: 30)
-                .position(x: 210, y: 30)
+                .position(x: 350, y: -25)
                 .rotationEffect(.degrees(20))
                 .shadow(radius: 10)
         }
     }
-  
+    
     private var shadowColor: Color {
         colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray
     }
@@ -188,5 +203,22 @@ struct ContactRowView: View {
             },
             secondaryButton: .cancel()
         )
+    }
+}
+
+struct ContactRowView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContactRowView(
+            contact: .constant(Contact(
+                identifier: "1",
+                givenName: "John",
+                familyName: "Doe",
+                phoneNumbers: ["+123456789"],
+                iLiked: true,
+                itsMatch: true
+            )),
+            viewModel: ContactListViewModel()
+        )
+        .previewLayout(.sizeThatFits)
     }
 }

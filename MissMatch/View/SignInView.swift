@@ -51,7 +51,7 @@ struct SignInView: View {
             .onReceive(signInVM.$navigateToStart) { navigateToStart in
                 if navigateToStart {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        coordinator.handleFailure()
+                        coordinator.signOutAndReturnToStart()
                     }
                 }
             }
@@ -67,7 +67,7 @@ struct SignInView: View {
             let userId = appleIDCredential.user
             let authorizationCode = appleIDCredential.authorizationCode
             let authorizationCodeString = String(data: authorizationCode!, encoding: .utf8) ?? ""
-          
+            
             UserDefaultsManager.shared.saveAppleId(userId)
             
             signInVM.sendToServer(authorizationCode: authorizationCodeString)

@@ -4,22 +4,21 @@
 //
 //  Created by Anatoliy Petrov on 25.7.24..
 //
-
-
 import SwiftUI
 
 struct ContactListView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var coordinator: AppCoordinator
-    
     @ObservedObject var viewModel = ContactListViewModel()
-    @State var showMatchView = false
+    
     @State var matchedContact: Contact?
     @State var testId = ""
+    @State private var isShowingMatchView = false
     @State private var isLoading = false
     @State private var showErrorPopup = false
     @State private var errorMessage = ""
     @State private var searchText = ""
+    @State private var isFirstAppear = true
     
     var filteredContacts: [Contact] {
         if searchText.isEmpty {
@@ -45,7 +44,6 @@ struct ContactListView: View {
     var sectionTitles: [String] {
         groupedContacts.keys.sorted()
     }
-
     
     var body: some View {
         NavigationStack {
@@ -111,58 +109,54 @@ struct ContactListView: View {
                             .padding()
                         }
                         .scrollIndicators(.visible)
+                        .refreshable {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                viewModel.checkAndShowMatchScreen()
+                            }
+                        }
                     }
                 }
             }
             .onAppear {
-                print("OnAppear")
-                reloadContacts()
-                startTimer()
-                checkAndShowMatchScreen()
+                viewModel.contacts = viewModel.loadContactsFromUD() ?? []
             }
             .onDisappear {
-                viewModel.stopRegularUpdates()
-                viewModel.maxRetryContactListCount = 0
-                viewModel.maxRetryMatchesCount = 0
+                viewModel.saveContactsToUD(viewModel.contacts)
+            }
+            .onChange(of: viewModel.showMatchView) {
+                if viewModel.showMatchView {
+                    isShowingMatchView.toggle()
+                    if let matchedContact = viewModel.contacts.first(where: { $0.itsMatch }) {
+                        coordinator.showMatchScreen(for: matchedContact)
+                    }
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        //viewModel.logout()
+                    }) {
+                        withAnimation(Animation.easeIn(duration: 3)) {
+                            HStack(spacing: 0){
+                                Image(systemName: "heart.text.square")
+                                Image(systemName: "figure.walk.departure")
+                            }.tint(Color(hex: "#f8dcdc"))
+                        }
+                        
+                    }
+                }
             }
         }
     }
     
     func reloadContacts() {
         viewModel.isLoading = true
-        showErrorPopup = false
-        errorMessage = ""
         viewModel.fetchContacts { contactList in
             viewModel.sendContactsToServer(contactList: contactList)
         }
         viewModel.isLoading.toggle()
     }
     
-    func startTimer() {
-        viewModel.startRegularUpdates(interval: 10)
-    }
-    
-    func checkAndShowMatchScreen() {
-        print("Application state: \(UIApplication.shared.applicationState)")
-        viewModel.getMatches { newMatchID in
-            guard let matchID = newMatchID else { return }
-            
-            if let matchedContact = viewModel.contacts.first(where: { $0.identifier == matchID }) {
-                
-                if UIApplication.shared.applicationState == .active {
-                    print("App is active, showing match view.")
-                    DispatchQueue.main.async {
-                        withAnimation(.easeInOut) {
-                            coordinator.showMatchScreen(for: matchedContact)
-                        }
-                    }
-                } else {
-                    
-                    viewModel.scheduleLocalNotification(contact: matchedContact)
-                }
-            }
-        }
-    }
     private func dismissKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }

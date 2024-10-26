@@ -17,6 +17,7 @@ class ContactListViewModel: ObservableObject {
     @Published var showErrorPopup = false
     @Published var errorMessage = ""
     @Published var navigateToStart = false
+    @Published var showMatchView: Bool = false
 
     private var retryCount = 0
     var maxRetryContactListCount = 3
@@ -68,6 +69,7 @@ class ContactListViewModel: ObservableObject {
                     
                     DispatchQueue.main.async {
                         self.contacts = contacts
+                        self.saveContactsToUD(contacts)
                         self.isLoading = false
                         
                         let contactList = self.sortContactsForServer(userID: UserDefaultsManager.shared.getAppleId() ?? "No Apple Id", contacts: contacts)
@@ -86,7 +88,6 @@ class ContactListViewModel: ObservableObject {
     }
     
     func sendContactsToServer(contactList: ContactList) {
-        
         guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
             showErrorPopup = true
             errorMessage = "Apple ID is not found."
@@ -118,7 +119,6 @@ class ContactListViewModel: ObservableObject {
                 case .success(let response):
                     if response.isSuccessful {
                         self.errorMessage = response.message
-                        
                         UserDefaultsManager.shared.removeAllContacts()
                         for contact in response.contacts {
                             UserDefaultsManager.shared.saveContactPhones(for: contact.contactId, phoneNumbers: contact.phones)
@@ -197,7 +197,10 @@ class ContactListViewModel: ObservableObject {
         
         for contact in contacts {
             if let savedPhones = UserDefaultsManager.shared.getContactPhones(for: contact.identifier) {
-                if savedPhones != contact.phoneNumbers {
+                let sortedSavedPhones = savedPhones.sorted()
+                let sortedCurrentPhones = contact.phoneNumbers.sorted()
+
+                if sortedSavedPhones != sortedCurrentPhones {
                     let toUpdateContact = To(contactID: contact.identifier, phones: contact.phoneNumbers)
                     toUpdate.append(toUpdateContact)
                 }
@@ -259,21 +262,39 @@ class ContactListViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     print("Matches received from server: \(response.contactIDS)")
-                    
-                    // Добавляем каждый матч в очередь
-                    for matchID in response.contactIDS {
-                        if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
-                            // Добавляем матч в очередь координатора
-                            coordinator.matchesQueue.append(matchedContact)
-                            print("Added match to queue: \(matchedContact.givenName ?? "") \(matchedContact.familyName ?? "")")
-                        }
-                    }
-                    
                     completion(response.contactIDS.first)
                 case .failure(let error):
                     self.handleUserSendingMatchesError(error: error) {
                         self.getMatches(completion: completion)
                     }
+                }
+            }
+        }
+    }
+    
+    func checkAndShowMatchScreen() {
+        // Получаем новые матчи и обновляем контакты
+        self.getMatches { [self] newMatchID in
+            guard let matchID = newMatchID else { return }
+            
+            // Обновляем статус матчей у контактов
+            for index in  self.contacts.indices {
+                if self.contacts[index].identifier == matchID {
+                    self.contacts[index].itsMatch = true
+                }
+            }
+            saveContactsToUD(self.contacts)
+            // Ищем контакт, чтобы показать матч
+            if let matchedContact =  self.contacts.first(where: { $0.identifier == matchID }) {
+                if UIApplication.shared.applicationState == .active {
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut) {
+                            self.showMatchView = true
+                        }
+                    }
+                } else {
+                    // Если приложение не активно, показываем локальное уведомление
+                    self.scheduleLocalNotification(contact: matchedContact)
                 }
             }
         }
@@ -337,22 +358,11 @@ class ContactListViewModel: ObservableObject {
     
     func startRegularUpdates(interval: TimeInterval) {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.getMatches { newMatchID in
-                if let matchID = newMatchID {
-                    // Если есть новый матч, ищем контакт и показываем нотификацию
-                    if let matchedContact = self?.contacts.first(where: { $0.identifier == matchID }) {
-                        self?.scheduleLocalNotification(contact: matchedContact)
-                        
-                        // Обновляем список показанных мэтчей
-                        var shownMatches = UserDefaults.standard.array(forKey: "shownMatches") as? [String] ?? []
-                        shownMatches.append(matchID)
-                        UserDefaults.standard.set(shownMatches, forKey: "shownMatches")
-                    }
-                }
-            }
+            self?.checkAndShowMatchScreen()
             //self?.checkAndSendLikeDifferences()
         }
     }
+    
     
     func scheduleLocalNotification(contact: Contact) {
         let content = UNMutableNotificationContent()
@@ -366,18 +376,9 @@ class ContactListViewModel: ObservableObject {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("Failed to schedule notification: \(error.localizedDescription)")
-            } else {
-                // Если приложение активно, покажи нотификацию вручную
-                DispatchQueue.main.async {
-                    if UIApplication.shared.applicationState == .active {
-                        self.errorMessage = "You have a new Match"
-                        self.showErrorPopup = true
-                    }
-                }
             }
         }
     }
-    
     
     func stopRegularUpdates() {
         timer?.invalidate()
@@ -435,6 +436,34 @@ class ContactListViewModel: ObservableObject {
         } else {
             print("Likes is up to date.")
         }
+    }
+    
+    func saveContactsToUD(_ contacts: [Contact]) {
+        resetSavedContacts()
+        let encoder = JSONEncoder()
+        if let encoded = try? encoder.encode(contacts) {
+            UserDefaults.standard.set(encoded, forKey: "savedContacts")
+        }
+    }
+
+    func loadContactsFromUD() -> [Contact]? {
+        if let savedContactsData = UserDefaults.standard.data(forKey: "savedContacts") {
+            let decoder = JSONDecoder()
+            if let loadedContacts = try? decoder.decode([Contact].self, from: savedContactsData) {
+                return loadedContacts
+            }
+        }
+        return nil
+    }
+    
+    func loadContactsToUI() {
+        if let loadedContacts = loadContactsFromUD() {
+            self.contacts = loadedContacts
+        }
+    }
+    
+    func resetSavedContacts() {
+        UserDefaults.standard.removeObject(forKey: "savedContacts")
     }
 }
 

@@ -34,15 +34,13 @@ struct ContactsResponse: Decodable {
     let contacts: [ContactDTO]
 }
 
-struct Contact: Identifiable, Decodable {
+struct Contact: Identifiable, Codable {
     let identifier: String
     var givenName: String? = nil
     var familyName: String? = nil
     let phoneNumbers: [String]
-    
     var iLiked: Bool = false
     var itsMatch: Bool = false
-    
     var id: String {
         return identifier
     }
@@ -56,10 +54,8 @@ struct Contact: Identifiable, Decodable {
 struct ContactDTO: Identifiable, Decodable {
     let contactId: String
     let phones: [String]
-    
     var iLiked: Bool = false
     var itsMatch: Bool = false
-    
     var id: String {
         return contactId
     }

@@ -9,9 +9,10 @@ import SwiftUI
 import Contacts
 
 struct SplashScreenView: View {
+    @EnvironmentObject var coordinator: AppCoordinator
+    @ObservedObject var contactListVM = ContactListViewModel()
     
     @State private var isActive = false
-    @State private var shouldPresentSignIn = false
     let userID = UserDefaultsManager.shared.getAppleId()
     
     var body: some View {
@@ -20,14 +21,13 @@ struct SplashScreenView: View {
                 .ignoresSafeArea()
             VStack {
                 if isActive {
-                    if shouldPresentSignIn {
+                    switch coordinator.currentView {
+                    case .signIn:
                         ContactPermissonView()
-                    } else {
-                        if userID != nil {
-                            ContactListView()
-                        } else {
-                            ContactPermissonView()
-                        }
+                    case .contactList:
+                        ContactListView()
+                    default:
+                        ContactPermissonView()
                     }
                 } else {
                     ZStack {
@@ -62,11 +62,17 @@ struct SplashScreenView: View {
                                 }
                         }
                         .transition(.opacity)
+                    }.onAppear{
+                        contactListVM.fetchContacts { contactList in
+                            contactListVM.sendContactsToServer(contactList: contactList)
+                        }
                     }
                 }
             }
             .onAppear {
-                checkContactAuthorization()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    checkContactAuthorization()
+                }
             }
         }
     }
@@ -75,25 +81,24 @@ struct SplashScreenView: View {
         _ = CNContactStore()
         switch CNContactStore.authorizationStatus(for: .contacts) {
         case .authorized:
-            proceedToNextView()
-        case .notDetermined:
-            self.shouldPresentSignIn = true
-            proceedToNextView()
-            
+            coordinator.currentView = .contactList
+        case .notDetermined, .denied:
+            coordinator.currentView = .contactPermisson
         default:
-            self.shouldPresentSignIn = true
-            proceedToNextView()
+            coordinator.currentView = .signIn
         }
+        proceedToNextView()
     }
     
     private func proceedToNextView() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             withAnimation(.spring(response: 1, dampingFraction: 0.5, blendDuration: 1.5)) {
                 self.isActive = true
             }
         }
     }
 }
+
 #Preview {
     SplashScreenView()
 }
