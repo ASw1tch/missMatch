@@ -354,7 +354,7 @@ class ContactListViewModel: ObservableObject {
     }
 
     
-    private var timer: Timer?
+    var timer: Timer?
     
     func startRegularUpdates(interval: TimeInterval) {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
