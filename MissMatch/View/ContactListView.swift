@@ -35,6 +35,10 @@ struct ContactListView: View {
         filteredContacts.filter { $0.iLiked }
     }
     
+    var matchedContacts: [Contact] {
+        filteredContacts.filter { $0.itsMatch }
+    }
+    
     var groupedContacts: [String: [Contact]] {
         Dictionary(grouping: filteredContacts) { contact in
             String(contact.givenName!.prefix(1)).uppercased()
@@ -48,7 +52,7 @@ struct ContactListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(colorScheme == .dark ? Color.black : Color.white).ignoresSafeArea()
+                Color(colorScheme == .dark ? Color(hex: "#1e1e1e") : Color(hex: "#FEFEFA")).ignoresSafeArea()
                 VStack {
                     if viewModel.isLoading {
                         VStack {
@@ -57,18 +61,32 @@ struct ContactListView: View {
                         }
                     } else {
                         ScrollView {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("I miss:")
-                                    .font(.largeTitle)
-                                    .bold()
-                                TextField("Search contacts", text: $searchText)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .padding(.vertical, 10)
+                            VStack(alignment: .leading, spacing: 14) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+                                    TextField("Search", text: $searchText)
+                                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .gray)
+                                }
+                                .padding(10)
+                                .background(colorScheme == .dark ? Color(hex: "#303030") : Color(hex: "#f0f0f0"))
+                                .cornerRadius(10)
                                 
-                                if !likedContacts.isEmpty {
+                                Section(header: Text("Matches")
+                                    .font(.headline)) {
+                                        ForEach(matchedContacts) { contact in
+                                            ContactRowView(contact: Binding(
+                                                get: { contact },
+                                                set: { updatedContact in
+                                                    if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
+                                                        viewModel.contacts[index] = updatedContact
+                                                    }
+                                                }), viewModel: viewModel)
+                                        }
+                                    }
+                                                        
                                     Section(header: Text("Liked Contacts")
-                                        .font(.headline)
-                                        .foregroundColor(.red)) {
+                                        .font(.headline)) {
                                             ForEach(likedContacts) { contact in
                                                 ContactRowView(contact: Binding(
                                                     get: { contact },
@@ -79,12 +97,12 @@ struct ContactListView: View {
                                                     }), viewModel: viewModel)
                                             }
                                         }
-                                }
                                 
+                                Section(header: Text("Your Contacts")
+                                    .font(.headline)) {
                                 ForEach(groupedContacts.keys.sorted(), id: \.self) { letter in
-                                    Section(header: Text(letter)
-                                        .font(.headline)
-                                        .foregroundColor(Color(hex: "#f8dcdc"))) {
+                                    Section(/*header: Text(letter)*/
+                                        /*.font(.headline)*/) {
                                             ForEach(groupedContacts[letter] ?? []) { contact in
                                                 ContactRowView(contact: Binding(
                                                     get: { contact },
@@ -101,6 +119,7 @@ struct ContactListView: View {
                                         .opacity(phase.isIdentity ? 1 : 0.5)
                                         .scaleEffect(phase.isIdentity ? 1 : 0.85)
                                         .blur(radius: phase.isIdentity ? 0 : 2)
+                                }
                                 }
                             }
                             .onTapGesture {
@@ -131,19 +150,26 @@ struct ContactListView: View {
                     }
                 }
             }
+            
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         //viewModel.logout()
                     }) {
                         withAnimation(Animation.easeIn(duration: 3)) {
-                            HStack(spacing: 0){
-                                Image(systemName: "heart.text.square")
-                                Image(systemName: "figure.walk.departure")
-                            }.tint(Color(hex: "#f8dcdc"))
+                                Image(systemName: "rectangle.portrait.and.arrow.forward")
+                                .resizable()
+                                .frame(width: 20, height: 25)
+                                .bold()
+                                .tint(Color(.black ))
                         }
                         
                     }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Text("I miss")
+                        .font(.largeTitle)
+                        .bold()
                 }
             }
         }
