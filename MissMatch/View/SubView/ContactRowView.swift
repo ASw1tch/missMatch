@@ -263,8 +263,8 @@ struct ContactRowView_Previews: PreviewProvider {
                 givenName: "John",
                 familyName: "Doe",
                 phoneNumbers: ["+123456789"],
-                iLiked: false,
-                itsMatch: false
+                iLiked: true,
+                itsMatch: true
             )),
             viewModel: ContactListViewModel()
         )

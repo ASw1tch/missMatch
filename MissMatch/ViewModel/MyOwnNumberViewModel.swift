@@ -48,7 +48,6 @@ class MyOwnNumderViewModel: ObservableObject {
     
     
     func handleContinueAction(selectedCountryCode: String?, phoneNumber: String) {
-        
         guard let selectedCountryCode = selectedCountryCode else {
             showErrorPopup = true
             errorMessage = "Country code is missing."
@@ -67,7 +66,8 @@ class MyOwnNumderViewModel: ObservableObject {
             }
             print("All phone numbers for the contact:", myNumbers)
             let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
-            let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
+            let myHashedPhoneNumbers = PhoneNumberManager.hashPhoneNumders(rawPhoneNumbers)
+            let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: myHashedPhoneNumbers)
             print(user)
             self.sendUserToServer(user: user)
         }

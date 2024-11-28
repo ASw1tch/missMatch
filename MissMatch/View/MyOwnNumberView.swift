@@ -83,7 +83,7 @@ struct MyOwnNumberView: View {
             .onReceive(myOwnNumberVM.$navigateToStart) { navigateToStart in
                 if navigateToStart {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        coordinator.signOutAndReturnToStart()
+                        coordinator.signOutAndReturnToStart() // Тут нужно отозвать токен эппла
                     }
                 }
             }

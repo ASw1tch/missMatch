@@ -19,6 +19,7 @@ struct ContactListView: View {
     @State private var errorMessage = ""
     @State private var searchText = ""
     @State private var isFirstAppear = true
+    @State private var showLogoutAlert = false
     
     var filteredContacts: [Contact] {
         if searchText.isEmpty {
@@ -129,7 +130,7 @@ struct ContactListView: View {
                         }
                         .scrollIndicators(.visible)
                         .refreshable {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                                 viewModel.checkAndShowMatchScreen()
                             }
                         }
@@ -138,6 +139,7 @@ struct ContactListView: View {
             }
             .onAppear {
                 viewModel.contacts = viewModel.loadContactsFromUD() ?? []
+                viewModel.startRegularUpdates(interval: 10)
             }
             .onDisappear {
                 viewModel.saveContactsToUD(viewModel.contacts)
@@ -150,11 +152,15 @@ struct ContactListView: View {
                     }
                 }
             }
-            
+            .onChange(of: viewModel.navigateToStart) { navigateToStart in
+                if navigateToStart {
+                    coordinator.signOutAndReturnToStart()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        //viewModel.logout()
+                        showLogoutAlert = true
                     }) {
                         withAnimation(Animation.easeIn(duration: 3)) {
                                 Image(systemName: "rectangle.portrait.and.arrow.forward")
@@ -163,7 +169,16 @@ struct ContactListView: View {
                                 .bold()
                                 .tint(Color(.black ))
                         }
-                        
+                    }
+                    .alert(isPresented: $showLogoutAlert) {
+                        Alert(
+                            title: Text("Log out and start over"),
+                            message: Text("By submitting this action you will logout from this account and delete all the data from this device and server. Do you want to proceed?"),
+                            primaryButton: .destructive(Text("Yes, Log me out")) {
+                               viewModel.logOut()
+                            },
+                            secondaryButton: .cancel(Text("Cancel"))
+                        )
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {

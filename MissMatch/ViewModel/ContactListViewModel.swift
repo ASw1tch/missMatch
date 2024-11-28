@@ -22,6 +22,7 @@ class ContactListViewModel: ObservableObject {
     private var retryCount = 0
     var maxRetryContactListCount = 3
     var maxRetryMatchesCount = 3
+    private let maxRetryCount = 2
     
     init() {
         maxRetryContactListCount = 0
@@ -55,6 +56,7 @@ class ContactListViewModel: ObservableObject {
                         
                         let likedContacts = UserDefaultsManager.shared.getLikes()
                         let matchedContacts = UserDefaultsManager.shared.getMatches()
+                        
                         
                         let contact = Contact(
                             identifier: cnContact.identifier,
@@ -196,16 +198,18 @@ class ContactListViewModel: ObservableObject {
         let savedContacts = UserDefaultsManager.shared.getAllContacts()
         
         for contact in contacts {
+            let hashedPhoneNumbers = PhoneNumberManager.hashPhoneNumders(contact.phoneNumbers)
+            
             if let savedPhones = UserDefaultsManager.shared.getContactPhones(for: contact.identifier) {
                 let sortedSavedPhones = savedPhones.sorted()
-                let sortedCurrentPhones = contact.phoneNumbers.sorted()
+                let sortedCurrentPhones = hashedPhoneNumbers.sorted()
 
                 if sortedSavedPhones != sortedCurrentPhones {
-                    let toUpdateContact = To(contactID: contact.identifier, phones: contact.phoneNumbers)
+                    let toUpdateContact = To(contactID: contact.identifier, phones: hashedPhoneNumbers)
                     toUpdate.append(toUpdateContact)
                 }
             } else {
-                let toAddContact = To(contactID: contact.identifier, phones: contact.phoneNumbers)
+                let toAddContact = To(contactID: contact.identifier, phones: hashedPhoneNumbers)
                 toAdd.append(toAddContact)
             }
         }
@@ -271,35 +275,7 @@ class ContactListViewModel: ObservableObject {
             }
         }
     }
-    
-    func checkAndShowMatchScreen() {
-        // Получаем новые матчи и обновляем контакты
-        self.getMatches { [self] newMatchID in
-            guard let matchID = newMatchID else { return }
-            
-            // Обновляем статус матчей у контактов
-            for index in  self.contacts.indices {
-                if self.contacts[index].identifier == matchID {
-                    self.contacts[index].itsMatch = true
-                }
-            }
-            saveContactsToUD(self.contacts)
-            // Ищем контакт, чтобы показать матч
-            if let matchedContact =  self.contacts.first(where: { $0.identifier == matchID }) {
-                if UIApplication.shared.applicationState == .active {
-                    DispatchQueue.main.async {
-                        withAnimation(.easeInOut) {
-                            self.showMatchView = true
-                        }
-                    }
-                } else {
-                    // Если приложение не активно, показываем локальное уведомление
-                    self.scheduleLocalNotification(contact: matchedContact)
-                }
-            }
-        }
-    }
-    
+
     private func handleUserSendingMatchesError(error: NetworkError, retryAction: @escaping () -> Void) {
         
         switch error {
@@ -353,16 +329,57 @@ class ContactListViewModel: ObservableObject {
         }
     }
 
-    
     var timer: Timer?
     
     func startRegularUpdates(interval: TimeInterval) {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.checkAndShowMatchScreen()
-            //self?.checkAndSendLikeDifferences()
+            self?.checkExistingMatches()
+           //self?.checkAndSendLikeDifferences()
         }
     }
     
+    func checkAndShowMatchScreen() {
+        // Получаем новые матчи и обновляем контакты
+        self.getMatches { [self] newMatchID in
+            guard let matchID = newMatchID else { return }
+            
+            // Обновляем статус матчей у контактов
+            for index in  self.contacts.indices {
+                if self.contacts[index].identifier == matchID {
+                    self.contacts[index].itsMatch = true
+                
+                    let matchResponse = MatchResponse(contactIDS: [matchID])
+                    UserDefaultsManager.shared.saveMatches(matchResponse)
+                }
+            }
+            saveContactsToUD(self.contacts)
+            
+            // Ищем контакт, чтобы показать матч
+            if UIApplication.shared.applicationState == .active {
+                DispatchQueue.main.async {
+                    withAnimation(.easeInOut) {
+                        self.showMatchView = true
+                    }
+                }
+            } else {
+                // Если приложение не активно, показываем локальное уведомление
+                if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
+                    self.scheduleLocalNotification(contact: matchedContact)
+                }
+            }
+        }
+    }
+    
+    func checkExistingMatches() {
+        if let matchedContact = self.contacts.first(where: { $0.itsMatch }) {
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut) {
+                    self.showMatchView = true
+                }
+            }
+        }
+    }
     
     func scheduleLocalNotification(contact: Contact) {
         let content = UNMutableNotificationContent()
@@ -412,6 +429,7 @@ class ContactListViewModel: ObservableObject {
                         UserDefaultsManager.shared.removeAllServerLikes()
                         UserDefaultsManager.shared.saveServerLike(contactIDs: response.likes)
                         print("Server likes: \(UserDefaultsManager.shared.getServerLikes())")
+                        print("Phone likes: \(UserDefaultsManager.shared.getLikes())")
                     } else {
                         print("Server error: \(response.message)")
                     }
@@ -422,9 +440,93 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
+    func logOut() {
+        guard let appleIdUser = UserDefaultsManager.shared.getAppleId(), !appleIdUser.isEmpty else {
+            showErrorPopup = true
+            errorMessage = "Apple ID is not found."
+            return
+        }
+        
+        guard let requestBody = appleIdUser.data(using: .utf8) else {
+            showErrorPopup = true
+            errorMessage = "Can't convert Apple ID to Data."
+            return
+        }
+        
+        isLoading = true
+        let headers: [HTTPHeaderField: String] = [
+            .contentType: HTTPHeaderValue.json.rawValue
+        ]
+        
+        NetworkManager.shared.sendRequest(
+            to: API.logOutApiUrl,
+            method: .POST,
+            headers: headers,
+            body: requestBody,
+            responseType: String.self
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let response):
+                    print("Response: \(response)")
+                    self?.showErrorPopup = true
+                    self?.errorMessage = "User logged out successfully: \(response)"
+                    UserDefaultsManager.shared.resetAllValues()
+                    self?.navigateToStart = true
+                case .failure(let error):
+                    print("Network error: \(error.localizedDescription)")
+                    self?.handleUserSendingError(error: error)
+                }
+            }
+        }
+    }
+    
+    private func handleUserSendingError(error: NetworkError) {
+        defer {
+            retryCount = 0
+        }
+        switch error {
+        case .badRequest:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .invalidToken, .userNotFound:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            self.navigateToStart = true
+            
+        case .tokenRevokeFailed:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
+            self.errorMessage = error.localizedDescription
+            self.showErrorPopup = true
+            
+        case .internalServerError:
+            if retryCount < maxRetryCount {
+                retryCount += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.logOut()
+                }
+            } else {
+                self.errorMessage = "Error. Please try again later."
+                self.showErrorPopup = true
+            }
+            
+        case .customError(let message):
+            print("Custom Error")
+            self.errorMessage = message
+            self.showErrorPopup = true
+        }
+    }
+    
     func checkLikesDifferences() -> [String]? {
         let onPhone = UserDefaultsManager.shared.getLikes()
+        print(onPhone)
         let onServer = UserDefaultsManager.shared.getServerLikes()
+        print(onServer)
         let differences = Set(onPhone).symmetricDifference(Set(onServer))
         return differences.isEmpty ? nil : Array(differences)
     }
@@ -444,14 +546,27 @@ class ContactListViewModel: ObservableObject {
         if let encoded = try? encoder.encode(contacts) {
             UserDefaults.standard.set(encoded, forKey: "savedContacts")
         }
+        let matchedContacts = contacts.filter { $0.itsMatch }.map { $0.identifier }
+        UserDefaults.standard.set(matchedContacts, forKey: "matchedContacts")
     }
 
     func loadContactsFromUD() -> [Contact]? {
         if let savedContactsData = UserDefaults.standard.data(forKey: "savedContacts") {
             let decoder = JSONDecoder()
-            if let loadedContacts = try? decoder.decode([Contact].self, from: savedContactsData) {
+            if var loadedContacts = try? decoder.decode([Contact].self, from: savedContactsData) {
+                let matchedContacts = UserDefaults.standard.stringArray(forKey: "matchedContacts") ?? []
+                print("Loaded contacts: \(loadedContacts)")
+                for index in loadedContacts.indices {
+                    if matchedContacts.contains(loadedContacts[index].identifier) {
+                        loadedContacts[index].itsMatch = true
+                    }
+                }
                 return loadedContacts
+            } else {
+                print("Failed to decode saved contacts.")
             }
+        } else {
+            print("No contacts found in UserDefaults.")
         }
         return nil
     }
@@ -459,6 +574,9 @@ class ContactListViewModel: ObservableObject {
     func loadContactsToUI() {
         if let loadedContacts = loadContactsFromUD() {
             self.contacts = loadedContacts
+            print("Contacts loaded into UI: \(self.contacts)")
+        } else {
+            print("No contacts to load into UI.")
         }
     }
     
