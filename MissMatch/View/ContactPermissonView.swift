@@ -52,7 +52,7 @@ struct ContactPermissonView: View {
                     SignInView(signInVM: SignInViewModel())
                 }
                 .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         requestContactAccess()
                     }
                 }
@@ -82,6 +82,9 @@ struct ContactPermissonView: View {
             }
             
             if granted {
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
                 showNextView = true
                 print("Notification permission granted")
             } else {

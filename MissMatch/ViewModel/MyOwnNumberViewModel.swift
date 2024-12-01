@@ -48,7 +48,6 @@ class MyOwnNumderViewModel: ObservableObject {
     
     
     func handleContinueAction(selectedCountryCode: String?, phoneNumber: String) {
-        
         guard let selectedCountryCode = selectedCountryCode else {
             showErrorPopup = true
             errorMessage = "Country code is missing."
@@ -67,7 +66,8 @@ class MyOwnNumderViewModel: ObservableObject {
             }
             print("All phone numbers for the contact:", myNumbers)
             let rawPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(myNumbers)
-            let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: rawPhoneNumbers)
+            let myHashedPhoneNumbers = PhoneNumberManager.hashPhoneNumders(rawPhoneNumbers)
+            let user = User(userId: UserDefaultsManager.shared.getAppleId() ?? "No Apple ID", phones: myHashedPhoneNumbers)
             print(user)
             self.sendUserToServer(user: user)
         }
@@ -106,7 +106,9 @@ class MyOwnNumderViewModel: ObservableObject {
                     print("Response: \(response)")
                     self?.showErrorPopup = true
                     self?.errorMessage = "User sent successfully: \(response)"
+                    UserDefaultsManager.shared.setMyPhoneInputted(value: true)
                     self?.shouldNavigate = true
+                    
                 case .failure(let error):
                     print("Network error: \(error.localizedDescription)")
                     self?.handleUserSendingError(error: error, user: user)
@@ -140,12 +142,10 @@ class MyOwnNumderViewModel: ObservableObject {
         case .internalServerError:
             if retryCount < maxRetryCount {
                 retryCount += 1
-                // Логика для повторного запроса через 1 секунду
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     self.sendUserToServer(user: user)
                 }
             } else {
-                // Ошибка после 3 попыток
                 self.errorMessage = "Error. Please contact support."
                 self.showErrorPopup = true
             }

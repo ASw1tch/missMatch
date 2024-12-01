@@ -16,6 +16,10 @@ struct PhoneNumberManager {
         return hashed.map { String(format: "%02x", $0) }.joined()
     }
     
+    static func hashPhoneNumders(_ phoneNumbers: [String]) -> [String] {
+        return phoneNumbers.map { hashPhoneNumber($0) }
+    }
+    
     static func normalizePhoneNumbers(_ phoneNumbers: [String]) -> [String] {
         var seenNumbers = Set<String>()
         let normalizedNumbers = phoneNumbers.compactMap { phoneNumber -> String? in

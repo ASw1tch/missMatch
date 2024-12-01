@@ -75,6 +75,7 @@ struct MyOwnNumberView: View {
                     viewModel.fetchContacts { contactList in
                         viewModel.sendContactsToServer(contactList: contactList)
                     }
+                    
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                         coordinator.currentView = .contactList
                     }
@@ -83,7 +84,7 @@ struct MyOwnNumberView: View {
             .onReceive(myOwnNumberVM.$navigateToStart) { navigateToStart in
                 if navigateToStart {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        coordinator.signOutAndReturnToStart()
+                        viewModel.logOut()
                     }
                 }
             }

@@ -8,6 +8,7 @@ import SwiftUI
 
 struct ContactListView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) var scenePhase
     @EnvironmentObject var coordinator: AppCoordinator
     @ObservedObject var viewModel = ContactListViewModel()
     
@@ -19,6 +20,7 @@ struct ContactListView: View {
     @State private var errorMessage = ""
     @State private var searchText = ""
     @State private var isFirstAppear = true
+    @State private var showLogoutAlert = false
     
     var filteredContacts: [Contact] {
         if searchText.isEmpty {
@@ -32,7 +34,11 @@ struct ContactListView: View {
     }
     
     var likedContacts: [Contact] {
-        filteredContacts.filter { $0.iLiked }
+        filteredContacts.filter { $0.iLiked && !$0.itsMatch}
+    }
+    
+    var matchedContacts: [Contact] {
+        filteredContacts.filter { $0.itsMatch }
     }
     
     var groupedContacts: [String: [Contact]] {
@@ -48,7 +54,7 @@ struct ContactListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(colorScheme == .dark ? Color.black : Color.white).ignoresSafeArea()
+                Color(colorScheme == .dark ? Color(hex: "#1e1e1e") : Color(hex: "#FEFEFA")).ignoresSafeArea()
                 VStack {
                     if viewModel.isLoading {
                         VStack {
@@ -57,51 +63,65 @@ struct ContactListView: View {
                         }
                     } else {
                         ScrollView {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("I miss:")
-                                    .font(.largeTitle)
-                                    .bold()
-                                TextField("Search contacts", text: $searchText)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .padding(.vertical, 10)
+                            VStack(alignment: .leading, spacing: 14) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+                                    TextField("Search", text: $searchText)
+                                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .gray)
+                                }
+                                .padding(10)
+                                .background(colorScheme == .dark ? Color(hex: "#303030") : Color(hex: "#f0f0f0"))
+                                .cornerRadius(10)
                                 
-                                if !likedContacts.isEmpty {
-                                    Section(header: Text("Liked Contacts")
-                                        .font(.headline)
-                                        .foregroundColor(.red)) {
-                                            ForEach(likedContacts) { contact in
-                                                ContactRowView(contact: Binding(
-                                                    get: { contact },
-                                                    set: { updatedContact in
-                                                        if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
-                                                            viewModel.contacts[index] = updatedContact
-                                                        }
-                                                    }), viewModel: viewModel)
+                                Section(header: Text("Matches")
+                                    .font(.headline)) {
+                                        ForEach(matchedContacts) { contact in
+                                            ContactRowView(contact: Binding(
+                                                get: { contact },
+                                                set: { updatedContact in
+                                                    if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
+                                                        viewModel.contacts[index] = updatedContact
+                                                    }
+                                                }), viewModel: viewModel)
+                                        }
+                                    }
+                                
+                                Section(header: Text("Liked Contacts")
+                                    .font(.headline)) {
+                                        ForEach(likedContacts) { contact in
+                                            ContactRowView(contact: Binding(
+                                                get: { contact },
+                                                set: { updatedContact in
+                                                    if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
+                                                        viewModel.contacts[index] = updatedContact
+                                                    }
+                                                }), viewModel: viewModel)
+                                        }
+                                    }
+                                
+                                Section(header: Text("Your Contacts")
+                                    .font(.headline)) {
+                                        ForEach(groupedContacts.keys.sorted(), id: \.self) { letter in
+                                            Section() {
+                                                ForEach(groupedContacts[letter] ?? []) { contact in
+                                                    ContactRowView(contact: Binding(
+                                                        get: { contact },
+                                                        set: { updatedContact in
+                                                            if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
+                                                                viewModel.contacts[index] = updatedContact
+                                                            }
+                                                        }), viewModel: viewModel)
+                                                }
                                             }
                                         }
-                                }
-                                
-                                ForEach(groupedContacts.keys.sorted(), id: \.self) { letter in
-                                    Section(header: Text(letter)
-                                        .font(.headline)
-                                        .foregroundColor(Color(hex: "#f8dcdc"))) {
-                                            ForEach(groupedContacts[letter] ?? []) { contact in
-                                                ContactRowView(contact: Binding(
-                                                    get: { contact },
-                                                    set: { updatedContact in
-                                                        if let index = viewModel.contacts.firstIndex(where: { $0.identifier == updatedContact.identifier }) {
-                                                            viewModel.contacts[index] = updatedContact
-                                                        }
-                                                    }), viewModel: viewModel)
-                                            }
+                                        .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
+                                            content
+                                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                                .scaleEffect(phase.isIdentity ? 1 : 0.85)
+                                                .blur(radius: phase.isIdentity ? 0 : 2)
                                         }
-                                }
-                                .scrollTransition(.animated.threshold(.visible(0.9))) { content, phase in
-                                    content
-                                        .opacity(phase.isIdentity ? 1 : 0.5)
-                                        .scaleEffect(phase.isIdentity ? 1 : 0.85)
-                                        .blur(radius: phase.isIdentity ? 0 : 2)
-                                }
+                                    }
                             }
                             .onTapGesture {
                                 dismissKeyboard()
@@ -111,17 +131,14 @@ struct ContactListView: View {
                         .scrollIndicators(.visible)
                         .refreshable {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                viewModel.checkAndShowMatchScreen()
+                                //reloadContacts()
                             }
                         }
                     }
                 }
             }
             .onAppear {
-                viewModel.contacts = viewModel.loadContactsFromUD() ?? []
-            }
-            .onDisappear {
-                viewModel.saveContactsToUD(viewModel.contacts)
+                viewModel.startRegularUpdates(interval: 10)
             }
             .onChange(of: viewModel.showMatchView) {
                 if viewModel.showMatchView {
@@ -131,30 +148,59 @@ struct ContactListView: View {
                     }
                 }
             }
+            .onChange(of: viewModel.navigateToStart) { oldValue, newValue in
+                if newValue {
+                    coordinator.signOutAndReturnToStart()
+                }
+            }
+            .onChange(of: scenePhase) { oldValue, newValue in
+                switch newValue {
+                case .active:
+                    if viewModel.contacts.isEmpty && UserDefaultsManager.shared.hasUserInputtedPhone() {
+                        viewModel.reloadContacts()
+                    }
+                    viewModel.showNextPendingMatch()
+                case .inactive:
+                    if !viewModel.contacts.isEmpty {
+                        viewModel.saveContactsToUD(viewModel.contacts)
+                    }
+                case .background:
+                    print("App is in background")
+                default:
+                    break
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        //viewModel.logout()
+                        showLogoutAlert = true
                     }) {
                         withAnimation(Animation.easeIn(duration: 3)) {
-                            HStack(spacing: 0){
-                                Image(systemName: "heart.text.square")
-                                Image(systemName: "figure.walk.departure")
-                            }.tint(Color(hex: "#f8dcdc"))
+                            Image(systemName: "rectangle.portrait.and.arrow.forward")
+                                .resizable()
+                                .frame(width: 20, height: 25)
+                                .bold()
+                                .tint(Color(.black ))
                         }
-                        
                     }
+                    .alert(isPresented: $showLogoutAlert) {
+                        Alert(
+                            title: Text("Log out and start over"),
+                            message: Text("By submitting this action you will logout from this account and delete all data associated with this application from this device and server. Do you want to proceed?"),
+                            primaryButton: .destructive(Text("Yes, Log me out")) {
+                                viewModel.logOut()
+                            },
+                            secondaryButton: .cancel(Text("Cancel"))
+                        )
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Text("I miss")
+                        .font(.largeTitle)
+                        .bold()
                 }
             }
         }
-    }
-    
-    func reloadContacts() {
-        viewModel.isLoading = true
-        viewModel.fetchContacts { contactList in
-            viewModel.sendContactsToServer(contactList: contactList)
-        }
-        viewModel.isLoading.toggle()
     }
     
     private func dismissKeyboard() {

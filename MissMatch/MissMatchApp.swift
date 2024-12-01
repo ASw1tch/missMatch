@@ -47,10 +47,6 @@ struct MyApp: App {
                 .animation(.easeInOut, value: coordinator.currentView)
             }
             .environmentObject(coordinator)
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                //startTimer()
-                //contactListVM.checkAndShowMatchScreen()
-            }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 contactListVM.saveContactsToUD(contactListVM.contacts)
             }

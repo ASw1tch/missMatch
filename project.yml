@@ -37,16 +37,13 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UILaunchStoryboardName: LaunchScreen
         NSContactsUsageDescription: Contacts permission is needed to be able to send likes to missing ones.
-        NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
-          NSExceptionDomains: 
-            51.250.55.29: 
-              NSExceptionAllowsInsecureHTTPLoads: true
         UIBackgroundModes:
         - fetch
         - remote-notification
       NSUserTrackingUsageDescription: "This identifier will be used for providing relevant notifications and content."
       NSLocationWhenInUseUsageDescription: "We need access to your location to provide personalized notifications."
+      capabilities:
+      push_notifications: true
     settings:
       base:
         TARGETED_DEVICE_FAMILY: 1

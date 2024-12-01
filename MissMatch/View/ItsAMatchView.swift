@@ -39,5 +39,5 @@ struct ItsAMatchView: View {
 }
 
 #Preview {
-    ItsAMatchView(contact: Contact(identifier: "22", givenName: "Mary", familyName: "Smith", phoneNumbers: ["+79332231312"]))
+    ItsAMatchView(contact: Contact(identifier: "22", givenName: "Mary", familyName: "Smith", phoneNumbers: ["+79332231312"], itsMatch: false))
 }
