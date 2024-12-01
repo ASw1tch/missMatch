@@ -44,7 +44,7 @@ class SignInViewModel: ObservableObject {
         ]
         
         NetworkManager.shared.sendRequest(
-            to: API.authCodeApiUrl,
+            to: API.authCodeApiUrl, // Add sending tokenDevice
             method: .POST,
             headers: headers,
             body: requestBody,

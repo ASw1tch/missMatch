@@ -62,32 +62,49 @@ struct SplashScreenView: View {
                                 }
                         }
                         .transition(.opacity)
-                    }.onAppear{
-                        contactListVM.fetchContacts { contactList in
-                            contactListVM.sendContactsToServer(contactList: contactList)
-                        }
                     }
                 }
             }
             .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    checkContactAuthorization()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    checkFullAuthorizationProccess()
                 }
             }
         }
     }
     
-    private func checkContactAuthorization() {
+    private func checkFullAuthorizationProccess() {
         _ = CNContactStore()
         switch CNContactStore.authorizationStatus(for: .contacts) {
         case .authorized:
-            coordinator.currentView = .contactList
+            checkAppleLogged()
         case .notDetermined, .denied:
             coordinator.currentView = .contactPermisson
         default:
             coordinator.currentView = .signIn
         }
         proceedToNextView()
+    }
+    
+    private func checkAppleLogged() {
+        if UserDefaultsManager.shared.getAppleId() != nil {
+            checkMyNumberLogged()
+        } else {
+            coordinator.currentView = .signIn
+        }
+    }
+    
+    private func checkMyNumberLogged() {
+        let inputtedMyNumber = UserDefaultsManager.shared.hasUserInputtedPhone()
+        if inputtedMyNumber {
+            contactListVM.fetchContacts { contactList in
+                contactListVM.sendContactsToServer(contactList: contactList)
+            }
+            coordinator.currentView = .contactList
+            
+        } else {
+            coordinator.currentView = .myNumber
+        }
     }
     
     private func proceedToNextView() {
@@ -102,3 +119,5 @@ struct SplashScreenView: View {
 #Preview {
     SplashScreenView()
 }
+
+

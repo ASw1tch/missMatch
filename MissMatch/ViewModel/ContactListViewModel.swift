@@ -11,6 +11,7 @@ import SwiftUI
 import UserNotifications
 
 class ContactListViewModel: ObservableObject {
+    
     @EnvironmentObject var coordinator: AppCoordinator
     @Published var contacts: [Contact] = []
     @Published var isLoading = false
@@ -18,13 +19,18 @@ class ContactListViewModel: ObservableObject {
     @Published var errorMessage = ""
     @Published var navigateToStart = false
     @Published var showMatchView: Bool = false
-
+    @Published var shownMatches: Set<String> = []
+    
     private var retryCount = 0
     var maxRetryContactListCount = 3
     var maxRetryMatchesCount = 3
     private let maxRetryCount = 2
     
     init() {
+        if UserDefaultsManager.shared.hasUserInputtedPhone() {
+            loadShownMatches()
+            reloadContacts()
+        }
         maxRetryContactListCount = 0
         maxRetryContactListCount = 0
     }
@@ -203,7 +209,7 @@ class ContactListViewModel: ObservableObject {
             if let savedPhones = UserDefaultsManager.shared.getContactPhones(for: contact.identifier) {
                 let sortedSavedPhones = savedPhones.sorted()
                 let sortedCurrentPhones = hashedPhoneNumbers.sorted()
-
+                
                 if sortedSavedPhones != sortedCurrentPhones {
                     let toUpdateContact = To(contactID: contact.identifier, phones: hashedPhoneNumbers)
                     toUpdate.append(toUpdateContact)
@@ -275,7 +281,7 @@ class ContactListViewModel: ObservableObject {
             }
         }
     }
-
+    
     private func handleUserSendingMatchesError(error: NetworkError, retryAction: @escaping () -> Void) {
         
         switch error {
@@ -302,7 +308,7 @@ class ContactListViewModel: ObservableObject {
                 print("Rertying Matches")
                 self.errorMessage = "Rertying Matches"
                 self.showErrorPopup = true
-
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                     retryAction()
                 }
@@ -328,34 +334,38 @@ class ContactListViewModel: ObservableObject {
             }
         }
     }
-
+    
     var timer: Timer?
     
     func startRegularUpdates(interval: TimeInterval) {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.checkAndShowMatchScreen()
-            self?.checkExistingMatches()
-           //self?.checkAndSendLikeDifferences()
+            self?.checkAndSendLikeDifferences()
         }
     }
     
     func checkAndShowMatchScreen() {
-        // Получаем новые матчи и обновляем контакты
         self.getMatches { [self] newMatchID in
             guard let matchID = newMatchID else { return }
             
-            // Обновляем статус матчей у контактов
-            for index in  self.contacts.indices {
+            if shownMatches.contains(matchID) {
+                print("Match \(matchID) already shown, skipping.")
+                return
+            }
+            
+            for index in self.contacts.indices {
                 if self.contacts[index].identifier == matchID {
                     self.contacts[index].itsMatch = true
-                
+                    
                     let matchResponse = MatchResponse(contactIDS: [matchID])
                     UserDefaultsManager.shared.saveMatches(matchResponse)
                 }
             }
             saveContactsToUD(self.contacts)
             
-            // Ищем контакт, чтобы показать матч
+            self.shownMatches.insert(matchID)
+            self.saveShownMatches()
+            
             if UIApplication.shared.applicationState == .active {
                 DispatchQueue.main.async {
                     withAnimation(.easeInOut) {
@@ -363,16 +373,16 @@ class ContactListViewModel: ObservableObject {
                     }
                 }
             } else {
-                // Если приложение не активно, показываем локальное уведомление
                 if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
                     self.scheduleLocalNotification(contact: matchedContact)
+                    self.addPendingMatch(matchID)
                 }
             }
         }
     }
     
     func checkExistingMatches() {
-        if let matchedContact = self.contacts.first(where: { $0.itsMatch }) {
+        if self.contacts.first(where: { $0.itsMatch }) != nil {
             DispatchQueue.main.async {
                 withAnimation(.easeInOut) {
                     self.showMatchView = true
@@ -381,10 +391,57 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
+    func showNextPendingMatch() {
+        if let nextMatchID = getNextPendingMatch(),
+           let matchedContact = contacts.first(where: { $0.identifier == nextMatchID }) {
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut) {
+                    self.showMatchView = true
+                }
+            }
+        }
+    }
+    
+    func loadShownMatches() {
+        if let savedMatches = UserDefaults.standard.stringArray(forKey: "shownMatches") {
+            self.shownMatches = Set(savedMatches)
+        }
+    }
+    
+    func saveShownMatches() {
+        UserDefaults.standard.set(Array(self.shownMatches), forKey: "shownMatches")
+    }
+    
+    func setPendingMatches(_ matchIDs: [String]) {
+        UserDefaults.standard.set(matchIDs, forKey: "pendingMatches")
+    }
+    
+    func getPendingMatches() -> [String] {
+        return UserDefaults.standard.stringArray(forKey: "pendingMatches") ?? []
+    }
+    
+    func clearPendingMatches() {
+        UserDefaults.standard.removeObject(forKey: "pendingMatches")
+    }
+    
+    func addPendingMatch(_ matchID: String) {
+        var matches = getPendingMatches()
+        matches.append(matchID)
+        setPendingMatches(matches)
+    }
+    
+    func getNextPendingMatch() -> String? {
+        var matches = getPendingMatches()
+        guard !matches.isEmpty else { return nil }
+        let nextMatch = matches.removeFirst()
+        setPendingMatches(matches)
+        return nextMatch
+    }
+    
     func scheduleLocalNotification(contact: Contact) {
         let content = UNMutableNotificationContent()
         content.title = "It's a Match!"
-        content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "") have matched!"
+        content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "")have matched!"
         content.sound = .default
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
@@ -522,19 +579,25 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
-    func checkLikesDifferences() -> [String]? {
+    func checkLikesDifferences() -> Bool {
         let onPhone = UserDefaultsManager.shared.getLikes()
-        print(onPhone)
         let onServer = UserDefaultsManager.shared.getServerLikes()
-        print(onServer)
-        let differences = Set(onPhone).symmetricDifference(Set(onServer))
-        return differences.isEmpty ? nil : Array(differences)
+        
+        print("Likes on phone: \(onPhone)")
+        print("Likes on server: \(onServer)")
+        
+        let phoneSet = Set(onPhone)
+        let serverSet = Set(onServer)
+        
+        let hasDifferences = phoneSet != serverSet
+        return hasDifferences
     }
     
     func checkAndSendLikeDifferences() {
-        if let differences = checkLikesDifferences() {
+        if checkLikesDifferences() {
             print("Likes are different, sending difference.")
-            sendLikeServerDifferenceRequest(toContactIDs: differences)
+            let onPhone = UserDefaultsManager.shared.getLikes()
+            sendLikeServerDifferenceRequest(toContactIDs: onPhone)
         } else {
             print("Likes is up to date.")
         }
@@ -549,13 +612,12 @@ class ContactListViewModel: ObservableObject {
         let matchedContacts = contacts.filter { $0.itsMatch }.map { $0.identifier }
         UserDefaults.standard.set(matchedContacts, forKey: "matchedContacts")
     }
-
+    
     func loadContactsFromUD() -> [Contact]? {
         if let savedContactsData = UserDefaults.standard.data(forKey: "savedContacts") {
             let decoder = JSONDecoder()
             if var loadedContacts = try? decoder.decode([Contact].self, from: savedContactsData) {
                 let matchedContacts = UserDefaults.standard.stringArray(forKey: "matchedContacts") ?? []
-                print("Loaded contacts: \(loadedContacts)")
                 for index in loadedContacts.indices {
                     if matchedContacts.contains(loadedContacts[index].identifier) {
                         loadedContacts[index].itsMatch = true
@@ -574,7 +636,6 @@ class ContactListViewModel: ObservableObject {
     func loadContactsToUI() {
         if let loadedContacts = loadContactsFromUD() {
             self.contacts = loadedContacts
-            print("Contacts loaded into UI: \(self.contacts)")
         } else {
             print("No contacts to load into UI.")
         }
@@ -582,6 +643,20 @@ class ContactListViewModel: ObservableObject {
     
     func resetSavedContacts() {
         UserDefaults.standard.removeObject(forKey: "savedContacts")
+    }
+    
+    func reloadContacts() {
+        if self.loadContactsFromUD() != nil {
+            DispatchQueue.main.async {
+                self.loadContactsToUI()
+            }
+        } else {
+            self.isLoading = true
+            self.fetchContacts { contactList in
+                self.sendContactsToServer(contactList: contactList)
+            }
+            self.isLoading.toggle()
+        }
     }
 }
 

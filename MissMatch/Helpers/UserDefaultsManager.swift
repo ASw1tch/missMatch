@@ -19,7 +19,11 @@ class UserDefaultsManager {
             savedLikesKey,
             matchesKey,
             likeServerKey,
-            userNameKey
+            userNameKey,
+            deviceTokenKey,
+            shownMatchesKey,
+            isMyPhoneInputtedKey,
+            pendingMatchKey
         ]
         
         for key in keys {
@@ -36,6 +40,11 @@ class UserDefaultsManager {
     private let matchesKey = "UserDefaultsManager.matchesKey"
     private let likeServerKey = "UserDefaultsManager.likeServerKey"
     private let userNameKey = "UserDefaultsManager.userNameKey"
+    private let deviceTokenKey = "UserDefaultsManager.deviceTokenKey"
+    private let isMyPhoneInputtedKey = "UserDefaultsManager.isMyPhoneInputtedKey"
+    
+    private let shownMatchesKey = "shownMatches"
+    private let pendingMatchKey = "pendingMatch"
     
     
     // MARK: - USER ID
@@ -182,6 +191,28 @@ class UserDefaultsManager {
     func removeUserName() {
         UserDefaults.standard.removeObject(forKey: userNameKey)
     }
+    
+    // MARK: - Device token
+    
+    func saveDeviceToken(_ deviceToken: String) {
+        UserDefaults.standard.set(deviceToken, forKey: deviceTokenKey)
+    }
+    
+    func getDeviceToken() -> String? {
+        return UserDefaults.standard.string(forKey: deviceTokenKey)
+    }
+    
+    func removeDeviceToken() {
+        UserDefaults.standard.removeObject(forKey: deviceTokenKey)
+    }
+    
+    // MARK: - User used his number
+    func setMyPhoneInputted(value: Bool) {
+        UserDefaults.standard.set(value, forKey: isMyPhoneInputtedKey)
+    }
+    
+    func hasUserInputtedPhone() -> Bool {
+        return UserDefaults.standard.bool(forKey: isMyPhoneInputtedKey)
+    }
 }
-
 
