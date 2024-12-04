@@ -57,6 +57,11 @@ class ContactListViewModel: ObservableObject {
                 
                 do {
                     try store.enumerateContacts(with: fetchRequest) { (cnContact, stop) in
+                        guard !cnContact.phoneNumbers.isEmpty else {
+                            print("Skipping contact with no phone numbers: \(cnContact.givenName) \(cnContact.familyName)")
+                            return
+                        }
+                        
                         let phoneNumbers = cnContact.phoneNumbers.map { $0.value.stringValue }
                         let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers(phoneNumbers)
                         
@@ -258,7 +263,7 @@ class ContactListViewModel: ObservableObject {
         }
     }
     
-    func getMatches(completion: @escaping (String?) -> Void) {
+    func getMatches(completion: @escaping ([String]) -> Void) {
         let headers: [HTTPHeaderField: String] = [:]
         
         NetworkManager.shared.sendRequest(
@@ -272,7 +277,7 @@ class ContactListViewModel: ObservableObject {
                 switch result {
                 case .success(let response):
                     print("Matches received from server: \(response.contactIDS)")
-                    completion(response.contactIDS.first)
+                    completion(response.contactIDS)
                 case .failure(let error):
                     self.handleUserSendingMatchesError(error: error) {
                         self.getMatches(completion: completion)
@@ -345,58 +350,40 @@ class ContactListViewModel: ObservableObject {
     }
     
     func checkAndShowMatchScreen() {
-        self.getMatches { [self] newMatchID in
-            guard let matchID = newMatchID else { return }
+        self.getMatches { [self] matchIDs in
+            guard !matchIDs.isEmpty else { return }
             
-            if shownMatches.contains(matchID) {
-                print("Match \(matchID) already shown, skipping.")
+            let allHandledMatches = shownMatches.union(Set(getPendingMatches()))
+            let newMatches = matchIDs.filter { !allHandledMatches.contains($0) }
+            
+            guard !newMatches.isEmpty else {
+                print("All matches already handled. Skipping notifications.")
                 return
             }
             
-            for index in self.contacts.indices {
-                if self.contacts[index].identifier == matchID {
+            for matchID in newMatches {
+                addPendingMatch(matchID)
+                
+                if let index = self.contacts.firstIndex(where: { $0.identifier == matchID }) {
                     self.contacts[index].itsMatch = true
                     
                     let matchResponse = MatchResponse(contactIDS: [matchID])
                     UserDefaultsManager.shared.saveMatches(matchResponse)
                 }
+                
+                self.shownMatches.insert(matchID)
             }
-            saveContactsToUD(self.contacts)
             
-            self.shownMatches.insert(matchID)
+            self.saveContactsToUD(self.contacts)
             self.saveShownMatches()
             
             if UIApplication.shared.applicationState == .active {
-                DispatchQueue.main.async {
-                    withAnimation(.easeInOut) {
-                        self.showMatchView = true
-                    }
-                }
+                showAllPendingMatches()
             } else {
-                if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
-                    self.scheduleLocalNotification(contact: matchedContact)
-                    self.addPendingMatch(matchID)
-                }
-            }
-        }
-    }
-    
-    func checkExistingMatches() {
-        if self.contacts.first(where: { $0.itsMatch }) != nil {
-            DispatchQueue.main.async {
-                withAnimation(.easeInOut) {
-                    self.showMatchView = true
-                }
-            }
-        }
-    }
-    
-    func showNextPendingMatch() {
-        if let nextMatchID = getNextPendingMatch(),
-           let matchedContact = contacts.first(where: { $0.identifier == nextMatchID }) {
-            DispatchQueue.main.async {
-                withAnimation(.easeInOut) {
-                    self.showMatchView = true
+                for matchID in newMatches {
+                    if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
+                        self.scheduleLocalNotification(contact: matchedContact)
+                    }
                 }
             }
         }
@@ -438,14 +425,49 @@ class ContactListViewModel: ObservableObject {
         return nextMatch
     }
     
+    func showAllPendingMatches() {
+        let pendingMatches = getPendingMatches()
+        guard !pendingMatches.isEmpty else {
+            print("No pending matches to show.")
+            return
+        }
+        
+        for matchID in pendingMatches {
+            guard let matchedContact = contacts.first(where: { $0.identifier == matchID }) else { continue }
+            
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut) {
+                    self.showMatchView = true
+                }
+            }
+            
+            removePendingMatch(matchID)
+        
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                self.showAllPendingMatches()
+            }
+            return
+        }
+    }
+    
+    func removePendingMatch(_ matchID: String) {
+        var matches = getPendingMatches()
+        matches.removeAll(where: { $0 == matchID })
+        setPendingMatches(matches)
+    }
+    
     func scheduleLocalNotification(contact: Contact) {
         let content = UNMutableNotificationContent()
         content.title = "It's a Match!"
-        content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "")have matched!"
+        content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "") have matched!"
         content.sound = .default
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "matchNotification", content: content, trigger: trigger)
+        let request = UNNotificationRequest(
+            identifier: "matchNotification_\(contact.identifier)",
+            content: content,
+            trigger: trigger
+        )
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {

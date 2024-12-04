@@ -23,13 +23,21 @@ struct ContactListView: View {
     @State private var showLogoutAlert = false
     
     var filteredContacts: [Contact] {
-        if searchText.isEmpty {
-            return viewModel.contacts
-        } else {
-            return viewModel.contacts.filter { contact in
-                contact.givenName?.lowercased().contains(searchText.lowercased()) ?? false ||
-                contact.familyName?.lowercased().contains(searchText.lowercased()) ?? false
+        let filtered = searchText.isEmpty
+        ? viewModel.contacts
+        : viewModel.contacts.filter { contact in
+            contact.givenName?.lowercased().contains(searchText.lowercased()) ?? false ||
+            contact.familyName?.lowercased().contains(searchText.lowercased()) ?? false
+        }
+        
+        return filtered.sorted { contact1, contact2 in
+            let isContact1Empty = (contact1.givenName?.isEmpty ?? true) && (contact1.familyName?.isEmpty ?? true)
+            let isContact2Empty = (contact2.givenName?.isEmpty ?? true) && (contact2.familyName?.isEmpty ?? true)
+            
+            if isContact1Empty != isContact2Empty {
+                return !isContact1Empty
             }
+            return false
         }
     }
     
@@ -131,7 +139,7 @@ struct ContactListView: View {
                         .scrollIndicators(.visible)
                         .refreshable {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                //reloadContacts()
+                                viewModel.reloadContacts()
                             }
                         }
                     }
@@ -159,7 +167,6 @@ struct ContactListView: View {
                     if viewModel.contacts.isEmpty && UserDefaultsManager.shared.hasUserInputtedPhone() {
                         viewModel.reloadContacts()
                     }
-                    viewModel.showNextPendingMatch()
                 case .inactive:
                     if !viewModel.contacts.isEmpty {
                         viewModel.saveContactsToUD(viewModel.contacts)
@@ -180,7 +187,7 @@ struct ContactListView: View {
                                 .resizable()
                                 .frame(width: 20, height: 25)
                                 .bold()
-                                .tint(Color(.black ))
+                                .tint(colorScheme == .dark ? .white : .black)
                         }
                     }
                     .alert(isPresented: $showLogoutAlert) {
