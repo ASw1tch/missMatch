@@ -50,7 +50,7 @@ struct ContactListView: View {
     }
     
     var groupedContacts: [String: [Contact]] {
-        Dictionary(grouping: filteredContacts) { contact in
+            Dictionary(grouping: filteredContacts) { contact in
             String(contact.givenName!.prefix(1)).uppercased()
         }
     }
@@ -146,13 +146,17 @@ struct ContactListView: View {
                 }
             }
             .onAppear {
-                viewModel.startRegularUpdates(interval: 10)
+                viewModel.startRegularUpdates(interval: 15)
             }
-            .onChange(of: viewModel.showMatchView) {
-                if viewModel.showMatchView {
-                    isShowingMatchView.toggle()
-                    if let matchedContact = viewModel.contacts.first(where: { $0.itsMatch }) {
+            .onChange(of: viewModel.matchesToShow) {oldValue, matches in
+                guard !matches.isEmpty else { return }
+                for matchID in matches {
+                    if let matchedContact = viewModel.contacts.first(where: { $0.identifier == matchID }) {
                         coordinator.showMatchScreen(for: matchedContact)
+                        DispatchQueue.main.async {
+                            viewModel.matchesToShow.remove(matchID)
+                            UserDefaultsManager.shared.addShownMatches(matchID)
+                        }
                     }
                 }
             }
@@ -164,6 +168,7 @@ struct ContactListView: View {
             .onChange(of: scenePhase) { oldValue, newValue in
                 switch newValue {
                 case .active:
+                    viewModel.processPendingMatches()
                     if viewModel.contacts.isEmpty && UserDefaultsManager.shared.hasUserInputtedPhone() {
                         viewModel.reloadContacts()
                     }
@@ -177,6 +182,7 @@ struct ContactListView: View {
                     break
                 }
             }
+            
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -185,7 +191,7 @@ struct ContactListView: View {
                         withAnimation(Animation.easeIn(duration: 3)) {
                             Image(systemName: "rectangle.portrait.and.arrow.forward")
                                 .resizable()
-                                .frame(width: 20, height: 25)
+                                .frame(width: 22, height: 25)
                                 .bold()
                                 .tint(colorScheme == .dark ? .white : .black)
                         }

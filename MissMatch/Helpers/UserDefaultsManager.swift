@@ -21,9 +21,8 @@ class UserDefaultsManager {
             likeServerKey,
             userNameKey,
             deviceTokenKey,
-            shownMatchesKey,
             isMyPhoneInputtedKey,
-            pendingMatchKey
+            shownMatches
         ]
         
         for key in keys {
@@ -42,9 +41,10 @@ class UserDefaultsManager {
     private let userNameKey = "UserDefaultsManager.userNameKey"
     private let deviceTokenKey = "UserDefaultsManager.deviceTokenKey"
     private let isMyPhoneInputtedKey = "UserDefaultsManager.isMyPhoneInputtedKey"
+    private let alreadyShownMatchesKey = "UserDefaultsManager.alreadyShownMatches"
+    private let shownMatches = "shownMatches"
     
-    private let shownMatchesKey = "shownMatches"
-    private let pendingMatchKey = "pendingMatch"
+    
     
     
     // MARK: - USER ID
@@ -158,6 +158,17 @@ class UserDefaultsManager {
     func removeAllMatches() {
         UserDefaults.standard.removeObject(forKey: matchesKey)
     }
+    
+    func addShownMatches(_ matchID: String) {
+        var alreadyShownMatches = getShownMatches()
+        alreadyShownMatches.append(matchID)
+        UserDefaults.standard.set(alreadyShownMatches, forKey: alreadyShownMatchesKey)
+    }
+    
+    func getShownMatches() -> [String] {
+        return UserDefaults.standard.stringArray(forKey: alreadyShownMatchesKey) ?? []
+    }
+    
     // MARK: - Array Likes (For sending after back from offline)
     
     func getServerLikes() -> [String] {

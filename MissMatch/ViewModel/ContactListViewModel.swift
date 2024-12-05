@@ -20,6 +20,7 @@ class ContactListViewModel: ObservableObject {
     @Published var navigateToStart = false
     @Published var showMatchView: Bool = false
     @Published var shownMatches: Set<String> = []
+    @Published var matchesToShow: Set<String> = []
     
     private var retryCount = 0
     var maxRetryContactListCount = 3
@@ -353,7 +354,10 @@ class ContactListViewModel: ObservableObject {
         self.getMatches { [self] matchIDs in
             guard !matchIDs.isEmpty else { return }
             
-            let allHandledMatches = shownMatches.union(Set(getPendingMatches()))
+            let shownMatchesUD = UserDefaultsManager.shared.getShownMatches()
+            let pendingMatchesUD = matchesToShow
+            let allHandledMatches = Set(shownMatchesUD).union(Set(pendingMatchesUD))
+            
             let newMatches = matchIDs.filter { !allHandledMatches.contains($0) }
             
             guard !newMatches.isEmpty else {
@@ -362,29 +366,40 @@ class ContactListViewModel: ObservableObject {
             }
             
             for matchID in newMatches {
-                addPendingMatch(matchID)
-                
+
                 if let index = self.contacts.firstIndex(where: { $0.identifier == matchID }) {
                     self.contacts[index].itsMatch = true
                     
                     let matchResponse = MatchResponse(contactIDS: [matchID])
                     UserDefaultsManager.shared.saveMatches(matchResponse)
                 }
-                
-                self.shownMatches.insert(matchID)
             }
             
             self.saveContactsToUD(self.contacts)
-            self.saveShownMatches()
             
             if UIApplication.shared.applicationState == .active {
-                showAllPendingMatches()
+                processPendingMatches()
             } else {
                 for matchID in newMatches {
                     if let matchedContact = self.contacts.first(where: { $0.identifier == matchID }) {
                         self.scheduleLocalNotification(contact: matchedContact)
+                        matchesToShow.insert(matchID)
+                        print("Matches to show(Notify set): \(self.matchesToShow)")
                     }
                 }
+            }
+        }
+    }
+
+    func processPendingMatches() {
+        let pendingMatches = matchesToShow
+        guard !pendingMatches.isEmpty else { return }
+        
+        for matchID in pendingMatches {
+            if contacts.first(where: { $0.identifier == matchID }) != nil {
+                self.matchesToShow.insert(matchID)
+                self.showMatchView = true
+                processPendingMatches()
             }
         }
     }
@@ -397,63 +412,6 @@ class ContactListViewModel: ObservableObject {
     
     func saveShownMatches() {
         UserDefaults.standard.set(Array(self.shownMatches), forKey: "shownMatches")
-    }
-    
-    func setPendingMatches(_ matchIDs: [String]) {
-        UserDefaults.standard.set(matchIDs, forKey: "pendingMatches")
-    }
-    
-    func getPendingMatches() -> [String] {
-        return UserDefaults.standard.stringArray(forKey: "pendingMatches") ?? []
-    }
-    
-    func clearPendingMatches() {
-        UserDefaults.standard.removeObject(forKey: "pendingMatches")
-    }
-    
-    func addPendingMatch(_ matchID: String) {
-        var matches = getPendingMatches()
-        matches.append(matchID)
-        setPendingMatches(matches)
-    }
-    
-    func getNextPendingMatch() -> String? {
-        var matches = getPendingMatches()
-        guard !matches.isEmpty else { return nil }
-        let nextMatch = matches.removeFirst()
-        setPendingMatches(matches)
-        return nextMatch
-    }
-    
-    func showAllPendingMatches() {
-        let pendingMatches = getPendingMatches()
-        guard !pendingMatches.isEmpty else {
-            print("No pending matches to show.")
-            return
-        }
-        
-        for matchID in pendingMatches {
-            guard let matchedContact = contacts.first(where: { $0.identifier == matchID }) else { continue }
-            
-            DispatchQueue.main.async {
-                withAnimation(.easeInOut) {
-                    self.showMatchView = true
-                }
-            }
-            
-            removePendingMatch(matchID)
-        
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                self.showAllPendingMatches()
-            }
-            return
-        }
-    }
-    
-    func removePendingMatch(_ matchID: String) {
-        var matches = getPendingMatches()
-        matches.removeAll(where: { $0 == matchID })
-        setPendingMatches(matches)
     }
     
     func scheduleLocalNotification(contact: Contact) {

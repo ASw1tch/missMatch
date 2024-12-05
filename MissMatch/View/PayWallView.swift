@@ -15,7 +15,7 @@ struct PayWallView: View {
         ZStack(alignment: .center) {
             Color(UIColor.systemBackground)
             VStack(spacing: 20) {
-                Text("PLOTI")
+                Text("Secret level")
                     .font(.largeTitle)
                     .bold()
                 Image(systemName: "creditcard.fill")

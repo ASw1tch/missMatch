@@ -13,13 +13,14 @@ struct ContactPermissonView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var isNotGranted = false
     @State private var showNextView = false
+    @State private var buttonTapped = false
     
     var body: some View {
         ZStack {
             Color(colorScheme == .dark ? Color.black : Color.white)
             if isNotGranted {
                 VStack {
-                    Text("Without contacts access, the app won't work. :(")
+                    Text("Without contacts access, the app won't work :(")
                         .font(.title)
                         .foregroundStyle(.secondary)
                         .bold()
@@ -28,33 +29,42 @@ struct ContactPermissonView: View {
                     Button(action: {
                         openAppSettings()
                     }) {
-                        Text("Go to Settings")
+                        Text("Ok, take me to settings")
                             .bold()
                             .padding()
-                            .background(Color(UIColor.systemBackground))
+                            .foregroundStyle(.cyan) .background(Color(UIColor.systemBackground))
                             .cornerRadius(8)
                             .shadow(color: colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray, radius: 3, x: 0, y: 2)
                     }
                     .padding(.top, 10)
                 }
             } else {
-                GeometryReader { geometry in
-                    ZStack {
-                        Text("Firstly give us permission to use your contacts and notifications")
+                    VStack {
+                        Text("Firstly, we need your permission to access your contacts and send notifications. To ensure your data is secure, we only use hashed phone numbers, not names or other details. Your privacy is our priority. ")
                             .font(.title)
                             .foregroundStyle(.secondary)
-                            .position(x: geometry.size.width / 2.2 , y: geometry.size.height / 4)
                             .bold()
                             .padding()
+                        Button(action: {
+                            requestContactAccess()
+                            withAnimation {
+                                buttonTapped.toggle()
+                            }
+                        }) {
+                            Text("Sounds good, Let’s Go")
+                                .bold()
+                                .padding()
+                                .background(Color(UIColor.systemBackground))
+                                .foregroundStyle(Color(hex: "3AD60F"))
+                                .cornerRadius(8)
+                                .shadow(color: colorScheme == .dark ? Color.white.opacity(0.3) : Color.gray, radius: 3, x: 0, y: 2)
+                        }
+                        
                     }
-                }
+                    .animation(.easeInOut(duration: 1), value: buttonTapped)
+                    .blur(radius: buttonTapped ? 7 : 0)
                 .fullScreenCover(isPresented: $showNextView) {
                     SignInView(signInVM: SignInViewModel())
-                }
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        requestContactAccess()
-                    }
                 }
             }
         }

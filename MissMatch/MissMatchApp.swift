@@ -30,8 +30,8 @@ struct MyApp: App {
                         MyOwnNumberView(
                             viewModel: ContactListViewModel(),
                             myOwnNumberVM: MyOwnNumderViewModel(),
-                            selectedCountry: Country(flag: "🇷🇸", code: "+381", name: "Serbia"),
-                            phoneNumber: "9312444263"
+                            selectedCountry: Country(flag: "🇷🇺", code: "+7", name: "Russia"),
+                            phoneNumber: ""
                         )
                         .transition(.slide)
                     case .contactList:
@@ -59,9 +59,5 @@ struct MyApp: App {
             contactListVM.sendContactsToServer(contactList: contactList)
         }
         contactListVM.isLoading.toggle()
-    }
-    
-    func startTimer() {
-        contactListVM.startRegularUpdates(interval: 10)
     }
 }
