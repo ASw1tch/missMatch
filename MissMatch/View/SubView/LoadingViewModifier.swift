@@ -20,7 +20,7 @@ struct LoadingViewModifier: ViewModifier {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .scaleEffect(3)
                     .background(Color.clear.edgesIgnoringSafeArea(.all))
-                    .offset(y: 100)
+                    .offset(y: 250)
             }
         }
     }

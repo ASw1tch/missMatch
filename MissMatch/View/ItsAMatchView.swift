@@ -29,7 +29,6 @@ struct ItsAMatchView: View {
                     .bold()
                 Button {
                     coordinator.dismissMatchScreen()
-                    print("Wow")
                 } label: {
                     Text("Awesome!")
                 }.buttonStyle(.borderedProminent)

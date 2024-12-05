@@ -50,7 +50,7 @@ struct SignInView: View {
             }
             .onReceive(signInVM.$navigateToStart) { navigateToStart in
                 if navigateToStart {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         coordinator.signOutAndReturnToStart()
                     }
                 }

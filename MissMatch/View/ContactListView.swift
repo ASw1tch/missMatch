@@ -23,13 +23,21 @@ struct ContactListView: View {
     @State private var showLogoutAlert = false
     
     var filteredContacts: [Contact] {
-        if searchText.isEmpty {
-            return viewModel.contacts
-        } else {
-            return viewModel.contacts.filter { contact in
-                contact.givenName?.lowercased().contains(searchText.lowercased()) ?? false ||
-                contact.familyName?.lowercased().contains(searchText.lowercased()) ?? false
+        let filtered = searchText.isEmpty
+        ? viewModel.contacts
+        : viewModel.contacts.filter { contact in
+            contact.givenName?.lowercased().contains(searchText.lowercased()) ?? false ||
+            contact.familyName?.lowercased().contains(searchText.lowercased()) ?? false
+        }
+        
+        return filtered.sorted { contact1, contact2 in
+            let isContact1Empty = (contact1.givenName?.isEmpty ?? true) && (contact1.familyName?.isEmpty ?? true)
+            let isContact2Empty = (contact2.givenName?.isEmpty ?? true) && (contact2.familyName?.isEmpty ?? true)
+            
+            if isContact1Empty != isContact2Empty {
+                return !isContact1Empty
             }
+            return false
         }
     }
     
@@ -42,7 +50,7 @@ struct ContactListView: View {
     }
     
     var groupedContacts: [String: [Contact]] {
-        Dictionary(grouping: filteredContacts) { contact in
+            Dictionary(grouping: filteredContacts) { contact in
             String(contact.givenName!.prefix(1)).uppercased()
         }
     }
@@ -131,20 +139,24 @@ struct ContactListView: View {
                         .scrollIndicators(.visible)
                         .refreshable {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                //reloadContacts()
+                                viewModel.reloadContacts()
                             }
                         }
                     }
                 }
             }
             .onAppear {
-                viewModel.startRegularUpdates(interval: 10)
+                viewModel.startRegularUpdates(interval: 15)
             }
-            .onChange(of: viewModel.showMatchView) {
-                if viewModel.showMatchView {
-                    isShowingMatchView.toggle()
-                    if let matchedContact = viewModel.contacts.first(where: { $0.itsMatch }) {
+            .onChange(of: viewModel.matchesToShow) {oldValue, matches in
+                guard !matches.isEmpty else { return }
+                for matchID in matches {
+                    if let matchedContact = viewModel.contacts.first(where: { $0.identifier == matchID }) {
                         coordinator.showMatchScreen(for: matchedContact)
+                        DispatchQueue.main.async {
+                            viewModel.matchesToShow.remove(matchID)
+                            UserDefaultsManager.shared.addShownMatches(matchID)
+                        }
                     }
                 }
             }
@@ -156,10 +168,10 @@ struct ContactListView: View {
             .onChange(of: scenePhase) { oldValue, newValue in
                 switch newValue {
                 case .active:
+                    viewModel.processPendingMatches()
                     if viewModel.contacts.isEmpty && UserDefaultsManager.shared.hasUserInputtedPhone() {
                         viewModel.reloadContacts()
                     }
-                    viewModel.showNextPendingMatch()
                 case .inactive:
                     if !viewModel.contacts.isEmpty {
                         viewModel.saveContactsToUD(viewModel.contacts)
@@ -170,6 +182,7 @@ struct ContactListView: View {
                     break
                 }
             }
+            
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -178,9 +191,9 @@ struct ContactListView: View {
                         withAnimation(Animation.easeIn(duration: 3)) {
                             Image(systemName: "rectangle.portrait.and.arrow.forward")
                                 .resizable()
-                                .frame(width: 20, height: 25)
+                                .frame(width: 22, height: 25)
                                 .bold()
-                                .tint(Color(.black ))
+                                .tint(colorScheme == .dark ? .white : .black)
                         }
                     }
                     .alert(isPresented: $showLogoutAlert) {

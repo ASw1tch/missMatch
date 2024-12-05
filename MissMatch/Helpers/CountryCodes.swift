@@ -14,7 +14,7 @@ struct Country: Hashable {
 }
 
 struct CountryCodes {
-    private let preferredCountries = ["Serbia", "Russia", "Ukraine", "Belarus", "Kazakhstan", "Armenia", "Turkey", "Georgia", "Cyprus"]
+    private let preferredCountries = ["Serbia", "Russia", "Ukraine", "Belarus", "Kazakhstan", "Armenia", "Turkey", "Georgia", "Cyprus", "Estonia"]
     
     let countryCodes: [Country]
     

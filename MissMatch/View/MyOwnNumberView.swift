@@ -19,12 +19,14 @@ struct MyOwnNumberView: View {
     @State private var showPreparingView = false
     @State private var shouldNavigateToContacts = false
     
+    
     let countryCodes = countryCodesInstance.sortedCountryCodes()
     
     var body: some View {
+        
         VStack {
-            Text("Now choose your phone number, to identify you for likes and matches.")
-                .font(.largeTitle)
+            Text(attributedText)
+                .font(.title)
                 .foregroundStyle(.secondary)
                 .bold()
                 .padding()
@@ -42,7 +44,7 @@ struct MyOwnNumberView: View {
                 .cornerRadius(8)
                 .tint(Color.primary)
                 
-                TextField("Phone", text: $phoneNumber)
+                TextField("(999)123-45-67", text: $phoneNumber)
                     .keyboardType(.phonePad)
                     .bold()
                     .padding()
@@ -70,20 +72,25 @@ struct MyOwnNumberView: View {
             }
             .padding()
             .disabled(phoneNumber.isEmpty)
+            Text("Make sure number is correct, as this ensures you don’t miss any matches. Confirmation by number coming up.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .bold()
+                .padding(.horizontal, 5)
             .onReceive(myOwnNumberVM.$shouldNavigate) { shouldNavigate in
                 if shouldNavigate {
                     viewModel.fetchContacts { contactList in
                         viewModel.sendContactsToServer(contactList: contactList)
                     }
                     
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         coordinator.currentView = .contactList
                     }
                 }
             }
             .onReceive(myOwnNumberVM.$navigateToStart) { navigateToStart in
                 if navigateToStart {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         viewModel.logOut()
                     }
                 }
@@ -95,6 +102,12 @@ struct MyOwnNumberView: View {
         .padding()
         .loading(isLoading: $myOwnNumberVM.isLoading)
         .popup(isShowing: $myOwnNumberVM.showErrorPopup, message: myOwnNumberVM.errorMessage)
+    }
+    private var attributedText: AttributedString {
+        var string = AttributedString("Now choose your phone number to identify yourself for likes and matches. Once again: your number is hashed and securely stored – we prioritize your privacy.")
+        if let range = string.range(of: "your privacy") {
+            string[range].foregroundColor = .gray.opacity(0.2)       }
+        return string
     }
 }
 
