@@ -9,7 +9,7 @@ import Foundation
 
 class LikesRepository {
 
-    private let maxFreeHearts = 10
+    private let maxFreeHearts = 1000000
         
     func loadLikes() -> [String] {
         return UserDefaultsManager.shared.getLikes()
