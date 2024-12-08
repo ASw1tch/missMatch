@@ -4,8 +4,8 @@ BUNDLE_ID_PREFIX: &BUNDLE_ID_PREFIX aswitch.me
 
 settings:
   base:
-    CURRENT_PROJECT_VERSION: 1
-    MARKETING_VERSION: "1.0.1"
+    CURRENT_PROJECT_VERSION: 2
+    MARKETING_VERSION: "1.0.2"
     DEVELOPMENT_TEAM: *DEVELOPMENT_TEAM
     IDEPreferLogStreaming: YES 
 
@@ -41,6 +41,7 @@ targets:
         UIBackgroundModes:
         - fetch
         - remote-notification
+        NSContactsUsageDescription: "We use access to your contacts solely to find matches by comparing securely encrypted phone numbers. Your actual contact details, including names, never leave your device unencrypted, and the data is never shared with third parties."
       NSUserTrackingUsageDescription: "This identifier will be used for providing relevant notifications and content."
       ITSAppUsesNonExemptEncryption: false
       capabilities:
