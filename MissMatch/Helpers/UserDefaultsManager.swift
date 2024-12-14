@@ -22,7 +22,9 @@ class UserDefaultsManager {
             userNameKey,
             deviceTokenKey,
             isMyPhoneInputtedKey,
-            shownMatches
+            shownMatches,
+            userNameDisplayKey,
+            userPhoneDisplayKey
         ]
         
         for key in keys {
@@ -42,6 +44,8 @@ class UserDefaultsManager {
     private let deviceTokenKey = "UserDefaultsManager.deviceTokenKey"
     private let isMyPhoneInputtedKey = "UserDefaultsManager.isMyPhoneInputtedKey"
     private let alreadyShownMatchesKey = "UserDefaultsManager.alreadyShownMatches"
+    private let userNameDisplayKey = "UserDefaultsManager.userNameDisplayKey"
+    private let userPhoneDisplayKey = "UserDefaultsManager.userPhoneDisplayKey"
     private let shownMatches = "shownMatches"
     
     
@@ -224,6 +228,25 @@ class UserDefaultsManager {
     
     func hasUserInputtedPhone() -> Bool {
         return UserDefaults.standard.bool(forKey: isMyPhoneInputtedKey)
+    }
+    
+    // MARK: - User name
+    func saveUserDisplayName(_ name: String) {
+        UserDefaults.standard.set(name, forKey: userNameDisplayKey)
+    }
+    
+    func getUserDisplayName() -> String? {
+        let name = UserDefaults.standard.string(forKey: userNameDisplayKey)
+        return name ?? "Unknown User"
+    }
+    
+    func saveUserDisplayPhone(_ name: String) {
+        UserDefaults.standard.set(name, forKey: userPhoneDisplayKey)
+    }
+    
+    func getUserDisplayPhone() -> String? {
+        let phone = UserDefaults.standard.string(forKey: userPhoneDisplayKey)
+        return phone ?? "Unknown phone"
     }
 }
 

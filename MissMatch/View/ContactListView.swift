@@ -20,7 +20,7 @@ struct ContactListView: View {
     @State private var errorMessage = ""
     @State private var searchText = ""
     @State private var isFirstAppear = true
-    @State private var showLogoutAlert = false
+    @State private var isShowingSettings = false
     
     var filteredContacts: [Contact] {
         let filtered = searchText.isEmpty
@@ -50,7 +50,7 @@ struct ContactListView: View {
     }
     
     var groupedContacts: [String: [Contact]] {
-            Dictionary(grouping: filteredContacts) { contact in
+        Dictionary(grouping: filteredContacts) { contact in
             String(contact.givenName!.prefix(1)).uppercased()
         }
     }
@@ -64,10 +64,23 @@ struct ContactListView: View {
             ZStack {
                 Color(colorScheme == .dark ? Color(hex: "#1e1e1e") : Color(hex: "#FEFEFA")).ignoresSafeArea()
                 VStack {
-                    if viewModel.isLoading {
+                    if viewModel.contacts.isEmpty {
                         VStack {
-                            ProgressView("Loading contacts...")
-                                .padding()
+                            Text("Your contact list is empty. Make sure you've added some contacts in settings")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                            
+                            Button(action: {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                    openAppSettings()
+                                }
+                            }) {
+                                Text("Tap here to go to settings")
+                                    .bold()
+                                    .padding()
+                                    
+                            }.padding(.horizontal, 20)
                         }
                     } else {
                         ScrollView {
@@ -146,7 +159,7 @@ struct ContactListView: View {
                 }
             }
             .onAppear {
-                viewModel.startRegularUpdates(interval: 15)
+                viewModel.startRegularUpdates(interval: 10)
             }
             .onChange(of: viewModel.matchesToShow) {oldValue, matches in
                 guard !matches.isEmpty else { return }
@@ -162,16 +175,17 @@ struct ContactListView: View {
             }
             .onChange(of: viewModel.navigateToStart) { oldValue, newValue in
                 if newValue {
+                    print("Navigate to start triggered")
                     coordinator.signOutAndReturnToStart()
                 }
             }
             .onChange(of: scenePhase) { oldValue, newValue in
                 switch newValue {
                 case .active:
+                    print("App is active")
                     viewModel.processPendingMatches()
-                    if viewModel.contacts.isEmpty && UserDefaultsManager.shared.hasUserInputtedPhone() {
-                        viewModel.reloadContacts()
-                    }
+                    refreshContacts()
+                    viewModel.reloadContacts()
                 case .inactive:
                     if !viewModel.contacts.isEmpty {
                         viewModel.saveContactsToUD(viewModel.contacts)
@@ -185,26 +199,18 @@ struct ContactListView: View {
             
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showLogoutAlert = true
-                    }) {
-                        withAnimation(Animation.easeIn(duration: 3)) {
-                            Image(systemName: "rectangle.portrait.and.arrow.forward")
+                    HStack {
+                        Button(action: {
+                            isShowingSettings = true
+                        }) {
+                            Image(systemName: "gearshape")
                                 .resizable()
-                                .frame(width: 22, height: 25)
-                                .bold()
+                                .frame(width: 22, height: 22)
                                 .tint(colorScheme == .dark ? .white : .black)
                         }
-                    }
-                    .alert(isPresented: $showLogoutAlert) {
-                        Alert(
-                            title: Text("Log out and start over"),
-                            message: Text("By submitting this action you will logout from this account and delete all data associated with this application from this device and server. Do you want to proceed?"),
-                            primaryButton: .destructive(Text("Yes, Log me out")) {
-                                viewModel.logOut()
-                            },
-                            secondaryButton: .cancel(Text("Cancel"))
-                        )
+                        .sheet(isPresented: $isShowingSettings) {
+                            SettingsView()
+                        }
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -218,6 +224,18 @@ struct ContactListView: View {
     
     private func dismissKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
+    private func openAppSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
+    }
+    
+    private func refreshContacts() {
+        viewModel.fetchContacts { contactList in
+            viewModel.sendContactsToServer(contactList: contactList)
+        }
     }
 }
 

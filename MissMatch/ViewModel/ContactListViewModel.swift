@@ -21,7 +21,7 @@ class ContactListViewModel: ObservableObject {
     @Published var showMatchView: Bool = false
     @Published var shownMatches: Set<String> = []
     @Published var matchesToShow: Set<String> = []
-    
+
     private var retryCount = 0
     var maxRetryContactListCount = 3
     var maxRetryMatchesCount = 3
@@ -68,6 +68,7 @@ class ContactListViewModel: ObservableObject {
                         
                         let likedContacts = UserDefaultsManager.shared.getLikes()
                         let matchedContacts = UserDefaultsManager.shared.getMatches()
+                        let inputtedPhoneNumber = UserDefaultsManager.shared.getUserDisplayPhone() ?? ""
                         
                         
                         let contact = Contact(
@@ -78,6 +79,11 @@ class ContactListViewModel: ObservableObject {
                             iLiked: likedContacts.contains(cnContact.identifier),
                             itsMatch: matchedContacts.contains(cnContact.identifier)
                         )
+                        
+                        if contact.phoneNumbers.contains(inputtedPhoneNumber) {
+                            let fullName = "\(contact.givenName ?? "Unknown") \(contact.familyName ?? "Unknown")"
+                            UserDefaultsManager.shared.saveUserDisplayName(fullName)
+                        }
                         contacts.append(contact)
                     }
                     
@@ -418,7 +424,7 @@ class ContactListViewModel: ObservableObject {
         let content = UNMutableNotificationContent()
         content.title = "It's a Match!"
         content.body = "You and \(contact.givenName ?? "") \(contact.familyName ?? "") have matched!"
-        content.sound = .default
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("uMissMeSound.wav"))
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(
@@ -630,7 +636,7 @@ class ContactListViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.loadContactsToUI()
             }
-        } else {
+        }else {
             self.isLoading = true
             self.fetchContacts { contactList in
                 self.sendContactsToServer(contactList: contactList)

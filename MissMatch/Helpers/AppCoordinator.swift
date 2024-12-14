@@ -8,6 +8,7 @@
 import Foundation
 
 class AppCoordinator: ObservableObject {
+
     @Published var currentView: AppView = .splashScreen
     @Published var matchesQueue: [Contact] = []
     @Published var matchedContact: Contact? = nil
@@ -50,6 +51,7 @@ class AppCoordinator: ObservableObject {
     
     func signOutAndReturnToStart() {
         UserDefaultsManager.shared.resetAllValues()
+        LogOutViewModel().logOut()
         showSignIn()
     }
 }

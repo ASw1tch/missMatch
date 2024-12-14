@@ -66,6 +66,7 @@ struct SplashScreenView: View {
                 }
             }
             .onAppear {
+                triggerIncreasingHapticFeedback()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                     checkFullAuthorizationProccess()
                 }
@@ -80,6 +81,13 @@ struct SplashScreenView: View {
             checkAppleLogged()
         case .notDetermined, .denied:
             coordinator.currentView = .contactPermisson
+        case .limited :
+            if UserDefaultsManager.shared.hasUserInputtedPhone() {
+                coordinator.currentView = .contactList
+            } else {
+                checkAppleLogged()
+            }
+            
         default:
             coordinator.currentView = .signIn
         }
@@ -96,12 +104,11 @@ struct SplashScreenView: View {
     
     private func checkMyNumberLogged() {
         let inputtedMyNumber = UserDefaultsManager.shared.hasUserInputtedPhone()
-        if inputtedMyNumber {
+        if inputtedMyNumber == true {
             contactListVM.fetchContacts { contactList in
                 contactListVM.sendContactsToServer(contactList: contactList)
             }
             coordinator.currentView = .contactList
-            
         } else {
             coordinator.currentView = .myNumber
         }
@@ -111,6 +118,19 @@ struct SplashScreenView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             withAnimation(.spring(response: 1, dampingFraction: 0.5, blendDuration: 1.5)) {
                 self.isActive = true
+            }
+        }
+    }
+    
+    private func triggerIncreasingHapticFeedback() {
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        
+        let intervals = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2]
+        
+        for (index, delay) in intervals.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                generator.impactOccurred(intensity: CGFloat(index + 1) * 0.2)
             }
         }
     }

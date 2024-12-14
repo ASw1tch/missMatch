@@ -57,7 +57,8 @@ class MyOwnNumderViewModel: ObservableObject {
         var myNumbers = [String]()
         let myInputNumber = selectedCountryCode + phoneNumber
         myNumbers.append(myInputNumber)
-        
+        UserDefaultsManager.shared.saveUserDisplayPhone(myInputNumber)
+                    
         findContactPhoneNumbers(for: myInputNumber) { phoneNumbers in
             if phoneNumbers.isEmpty {
                 myNumbers.append(myInputNumber)
@@ -105,7 +106,7 @@ class MyOwnNumderViewModel: ObservableObject {
                 case .success(let response):
                     print("Response: \(response)")
                     self?.showErrorPopup = true
-                    self?.errorMessage = "User sent successfully: \(response)"
+                    self?.errorMessage = "User created successfully: \(response)"
                     UserDefaultsManager.shared.setMyPhoneInputted(value: true)
                     self?.shouldNavigate = true
                     
@@ -134,6 +135,7 @@ class MyOwnNumderViewModel: ObservableObject {
         case .tokenRevokeFailed:
             self.errorMessage = error.localizedDescription
             self.showErrorPopup = true
+            self.navigateToStart = true
             
         case .phonesCannotBeEmpty, .phoneAlreadyAssigned:
             self.errorMessage = error.localizedDescription
@@ -146,7 +148,7 @@ class MyOwnNumderViewModel: ObservableObject {
                     self.sendUserToServer(user: user)
                 }
             } else {
-                self.errorMessage = "Error. Please contact support."
+                self.errorMessage = "Error. Please try again later or contact support."
                 self.showErrorPopup = true
             }
             
@@ -154,6 +156,37 @@ class MyOwnNumderViewModel: ObservableObject {
             print("Custom Error")
             self.errorMessage = message
             self.showErrorPopup = true
+            self.navigateToStart = true
+        }
+    }
+    
+    func getContactName(for phoneNumber: String, completion: @escaping (String?) -> Void) {
+        let store = CNContactStore()
+        
+    
+        let normalizedPhoneNumbers = PhoneNumberManager.normalizePhoneNumbers([phoneNumber])
+        let predicates = normalizedPhoneNumbers.map {
+            CNContact.predicateForContacts(matching: CNPhoneNumber(stringValue: $0))
+        }
+        
+        let keysToFetch = [CNContactGivenNameKey as CNKeyDescriptor, CNContactFamilyNameKey as CNKeyDescriptor]
+        
+        do {
+            var foundName: String?
+            
+            for predicate in predicates {
+                let contacts = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
+                
+                if let contact = contacts.first {
+                    foundName = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+                    break // Прерываем цикл, если контакт найден
+                }
+            }
+            
+            completion(foundName?.isEmpty == false ? foundName : nil)
+        } catch {
+            print("Error fetching contact: \(error)")
+            completion(nil)
         }
     }
 }

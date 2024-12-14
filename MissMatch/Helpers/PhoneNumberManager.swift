@@ -7,6 +7,7 @@
 
 import Foundation
 import CryptoKit
+import Contacts
 
 struct PhoneNumberManager {
     
@@ -42,4 +43,35 @@ struct PhoneNumberManager {
         }
         return normalizedNumbers
     }
+    
+    static func findContactName(for phoneNumber: String, completion: @escaping (String?) -> Void) {
+        let contactStore = CNContactStore()
+        let normalizedPhoneNumber = normalizePhoneNumbers([phoneNumber]).first ?? phoneNumber
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            let predicate = CNContact.predicateForContacts(matching: CNPhoneNumber(stringValue: normalizedPhoneNumber))
+            let keysToFetch = [CNContactGivenNameKey as CNKeyDescriptor, CNContactFamilyNameKey as CNKeyDescriptor]
+            
+            do {
+                let contacts = try contactStore.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
+                
+                if let contact = contacts.first {
+                    let fullName = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+                    DispatchQueue.main.async {
+                        completion(fullName.isEmpty ? nil : fullName)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        completion(nil) // Контакт не найден
+                    }
+                }
+            } catch {
+                print("Ошибка при поиске контакта: \(error)")
+                DispatchQueue.main.async {
+                    completion(nil) // Ошибка при поиске
+                }
+            }
+        }
+    }
+    
 }
