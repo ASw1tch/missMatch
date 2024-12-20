@@ -1,6 +1,7 @@
 # UMissMe - Like, Match, Enjoy!
 
-![UMissMe Logo](link_to_logo_image)
+![UMissMe Logo]([https://github.com/user-attachments/assets/9a02357f-151d-41bf-9866-5bcd71652c6f])
+
 
 **UMissMe** is your ultimate connection assistant, designed to ensure you never lose an important contact or miss a meaningful match. With intuitive tools and seamless syncing, UMissMe empowers you to reconnect, engage, and grow your personal and professional network—privately.
 
@@ -17,7 +18,7 @@
 1. **Download the App**:
    - [UMissMe for iOS](# UMissMe - Like, Match, Enjoy!
 
-![UMissMe Logo](link_to_logo_image)
+![UMissMe Logo]([https://github.com/user-attachments/assets/9a02357f-151d-41bf-9866-5bcd71652c6f])
 
 **UMissMe** is your ultimate connection assistant, designed to ensure you never lose an important contact or miss a meaningful match. With intuitive tools and seamless syncing, UMissMe empowers you to reconnect, engage, and grow your personal and professional network—privately.
 
