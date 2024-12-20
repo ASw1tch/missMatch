@@ -18,7 +18,7 @@
 ## Installation
 
 1. **Download the App**:
-   - [UMissMe for iOS](# UMissMe - Like, Match, Enjoy!
+   - [UMissMe for iOS]([# UMissMe - Like, Match, Enjoy!](https://apps.apple.com/rs/app/umissme/id6739089315)
 
 ## Screenshots
 
