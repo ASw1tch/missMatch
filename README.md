@@ -21,7 +21,9 @@
    - [UMissMe for iOS](https://apps.apple.com/rs/app/umissme/id6739089315)
 
 ## Screenshots
-
+<div align="center">
 <img src= "https://github.com/user-attachments/assets/1a417330-96c6-478e-8956-81ae07b36d7f" width="160" height="360"> <img src= "https://github.com/user-attachments/assets/cd268b00-2acf-40bf-8c8f-549c0d63ed23" width="160" height="360">
 <img src= "https://github.com/user-attachments/assets/50628de0-fa34-4bff-8c9c-92816e89f128" width="160" height="360"> <img src= "https://github.com/user-attachments/assets/303c63e5-4cbc-47c7-8d1d-9ea2605df15f" width="160" height="360">
+</div>
+
 
