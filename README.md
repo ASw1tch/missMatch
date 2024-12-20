@@ -1,6 +1,5 @@
 # UMissMe - Like, Match, Enjoy!
-
-![UMissMe Logo](https://github.com/user-attachments/assets/9a02357f-151d-41bf-9866-5bcd71652c6f)
+<img src= "https://github.com/user-attachments/assets/9a02357f-151d-41bf-9866-5bcd71652c6f" width="500" height="500">
 
 
 **UMissMe** is your ultimate connection assistant, designed to ensure you never lose an important contact or miss a meaningful match. With intuitive tools and seamless syncing, UMissMe empowers you to reconnect, engage, and grow your personal and professional network—privately.
