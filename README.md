@@ -1,11 +1,11 @@
 # UMissMe - Like, Match, Enjoy!
 
+**UMissMe** is your ultimate connection assistant, designed to ensure you never lose an important contact or miss a meaningful match. With intuitive tools and seamless syncing, UMissMe empowers you to reconnect, engage, and grow your personal and professional network. Privately.
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/9a02357f-151d-41bf-9866-5bcd71652c6f" width="400" height="400">
 </div>
 
-**UMissMe** is your ultimate connection assistant, designed to ensure you never lose an important contact or miss a meaningful match. With intuitive tools and seamless syncing, UMissMe empowers you to reconnect, engage, and grow your personal and professional network—privately.
 
 ## Key Features
 
@@ -19,41 +19,6 @@
 
 1. **Download the App**:
    - [UMissMe for iOS](# UMissMe - Like, Match, Enjoy!
-
-![UMissMe Logo](https://github.com/user-attachments/assets/9a02357f-151d-41bf-9866-5bcd71652c6f)
-
-**UMissMe** is your ultimate connection assistant, designed to ensure you never lose an important contact or miss a meaningful match. With intuitive tools and seamless syncing, UMissMe empowers you to reconnect, engage, and grow your personal and professional network—privately.
-
-## Key Features
-
-- **Smart Contact Syncing**: Easily integrate your contacts and identify new matches with just a few taps.
-- **Real-Time Notifications**: Stay updated on new matches and never miss an opportunity.
-- **Secure and Private**: Your data is hashed, securely stored, and protected at every step.
-- **Effortless Usability**: A clean and intuitive design makes managing your connections a breeze.
-- **Personalized Matching**: Find and connect with people who truly matter to you.
-
-## Installation
-
-1. **Download the App**:
-   - [UMissMe for iOS](https://apps.apple.com/rs/app/umissme/id6739089315)
-2. **Install and Open** the application on your device.
-3. **Sign Up or Log In** to your existing account.
-
-## Usage
-
-- **Adding Contacts**: Import contacts from your device or add them manually.
-- **Finding Matches**: Use the search function to discover new connections.
-- **Managing Connections**: Organize and categorize your contacts for easy access.
-
-## Screenshots)
-2. **Install and Open** the application on your device.
-3. **Sign Up or Log In** to your existing account.
-
-## Usage
-
-- **Adding Contacts**: Import contacts from your device or add them manually.
-- **Finding Matches**: Use the search function to discover new connections.
-- **Managing Connections**: Organize and categorize your contacts for easy access.
 
 ## Screenshots
 
